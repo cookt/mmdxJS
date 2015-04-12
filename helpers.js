@@ -1,3 +1,4 @@
+
 // HELPERS
 var getPixelRGB = function(pixels, x,y, imageWidth, imageHeight){
     var red = pixels[y*imageWidth*4+x*4];
@@ -6,6 +7,27 @@ var getPixelRGB = function(pixels, x,y, imageWidth, imageHeight){
     return {"r":red, "g":green, "b":blue}
 }
 
+var getCoordsFromPixelOffset = function(offset, imageWidth, imageHeight){
+    //var offsetInPixels = Math.floor(offset/4);
+    var y = Math.floor(offset/imageWidth);
+    var x = offset -y*imageWidth;
+    return [x,y];
+
+}
+var isAreaRed = function(x,y, areaSize, pixels, imageWidth, imageHeight){
+    var threshold = 0.75;//lowest fraction of red points 
+    var red = 0;
+    for(var i = x-areaSize; i < x+areaSize; i++){
+        for(var j = y-areaSize; j < y+areaSize; j++){
+            var px = getPixelRGB(pixels, i,j, imageWidth, imageHeight);
+            if (isRed(px)){
+                red ++;
+            }
+        }
+    }
+
+    return red/(areaSize*areaSize) > threshold;
+}
 
 function rgbToHsl(r, g, b) {
     r /= 255, g /= 255, b /= 255;
@@ -94,50 +116,7 @@ function isRedRGB(r,g,b){
 }
 
 
-function findUpperCorner(a,b,c,d){
-    var y = [a[1], b[1], c[1], d[1]].minElement();
-    if (a[1]==y){
-        return a;
-    }
-    else if (b[1]==y){
-        return b;
-    }
-    else if (c[1]==y){
-        return c;
-    }
-    else if (d[1]==y){
-        return d;
-    }
-    //should never get here
-    else{
-        alert("Error in findUpperCorner function");
-    }
-}
-function findHighestSideCorner(a,b,c,d){
-    var ys = [a[1], b[1], c[1], d[1]];
 
-    ys.sort(function(a, b){return a-b});
-    console.log("sort");
-    console.log(ys);
-    //second highest element
-    var y = ys[1];
-    if (a[1]==y){
-        return a;
-    }
-    else if (b[1]==y){
-        return b;
-    }
-    else if (c[1]==y){
-        return c;
-    }
-    else if (d[1]==y){
-        return d;
-    }
-    //should never get here
-    else{
-        alert("Error in findUpperCorner function");
-    }
-}
 /*
  * Calculates the angle ABC (in radians)
  *
@@ -151,12 +130,30 @@ function findAngle(A,B,C) {
     var AC = Math.sqrt(Math.pow(C.x-A.x,2)+ Math.pow(C.y-A.y,2));
     return Math.acos((BC*BC+AB*AB-AC*AC)/(2*BC*AB));
 }
-function rotateCorner(angle, corner, center){
-    var pointX = corner[0];
-    var pointY = corner[1];
-    var originX = center[0];
-    var originY = center[1];
-    var x = Math.cos(angle) * (pointX) - Math.sin(angle) * (pointY);
-    var y = Math.sin(angle) * (pointX) + Math.cos(angle) * (pointY);
-    return [x,y]
+
+
+function distance(A,B){
+    return Math.sqrt(Math.pow(A.x-B.x,2)+Math.pow(A.y-B.y,2));
+}
+function findClosest(A,listB, error){
+    var DEFAULT_DIST = 1000000000
+    var minDist = DEFAULT_DIST;
+    var minDistPoint;
+    for (var ind = 0; ind < listB.length; ind ++){
+        var point = listB[ind];
+        var dist = distance(A, point);
+        if (dist < error){
+            if (distance(A, point)< minDist){
+                minDist = distance(A, point);
+                minDistPoint = point;
+
+            }
+        }
+    }
+    
+    if (minDist == DEFAULT_DIST ){
+        return undefined;
+    }
+    return minDistPoint;
+
 }
