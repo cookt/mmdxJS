@@ -4,8 +4,9 @@ To see the webpage in the app:
 
 External libraries used:
 
-1.Tracking.js
+1. Tracking.js
 http://trackingjs.com/
+
 
 2. Cornerdetect.js (Harris operator, MIT License)
 https://github.com/wellflat/javascript-labs/tree/master/cv/corner_detection
