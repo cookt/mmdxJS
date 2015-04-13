@@ -57,8 +57,6 @@
     //variables for the tracker.js
     var tracked_rect;
     var markerRectangle;
-    
-
 
     //Test images in base64
     var mmdx_image_normal = getTestImageNormal();
@@ -125,7 +123,7 @@
     function getBlackBoxes(){
         //This is just for optimization might get rid of it if it causes problems
         var searchWidth = canvas.width;
-        var searchHeight = canvas.height;
+        var searchHeight = canvas.height/2;
         //coordinates of the black boxes
         var boxes = [];
         var firstBox = [];
@@ -134,45 +132,6 @@
         var fourthBox = [];
         var pixelRow = context.getImageData(0, 0, searchWidth, 1);
         var data = pixelRow.data;
-
-        /**
-         *
-         * @param startX. Position along the row of data to start the search
-         * @param box. Array to fill with box width coordinates.
-         * @param data. This row data should be for a y coordinate in the middle of a black box (so it should contain all of the black boxes.)
-         * @returns {number}
-         */
-// Operational: we are given a row somewhere in the vertical middle of the black boxes. We go through that row and when we see the first edge
-// we assign it as the start width of the box. Then we keep going while we see black and assign the first not black pixel as the end width.
-// This is called four times for the four boxes.
-        function findBlackBoxEdgesFromMiddle(startX,box,data, y) {
-            var lastX = 0;
-            for (var x = startX; x < data.length; x+=4) {
-                if (isBlackRGB(data[x],data[x+1],data[x+2])) {
-                    //we found the first edge so add it to the box array
-                    var checkedFurther = true;
-                    for(var verifyX = x; verifyX < x+40; verifyX+=4) {
-                        //context.fillStyle = "green";
-                        //context.fillRect(verifyX/4, y, 3, 3 );
-                        if (!isBlackRGB(data[verifyX],data[verifyX+1],data[verifyX+2])) {
-                            checkedFurther = false;
-                        }
-                    }
-                    if(checkedFurther){
-                        box.push(x/4);
-                        while (isBlackRGB(data[x],data[x+1],data[x+2])) {
-                            context.fillStyle = "yellow";
-                            context.fillRect(x/4, y, 3, 3 );
-                            x+=4;
-                        }
-                        box.push(x/4);
-                        lastX = x;
-                    }
-                }
-            }
-            console.log("LAST: ",lastX/4);
-            return lastX/4;
-        }
 
         /**
          * Finds the vertical middle of the row of black boxes. We use this row to search because the tops and bottoms of the boxes aren't perfectly aligned.
@@ -187,7 +146,7 @@
                 //console.log(horizontalMiddleOfBox);
                 horizontalMiddleOfBox++;
             }
-            horizontalMiddleOfBox += 30;
+            horizontalMiddleOfBox += canvas.height * .04;
             return horizontalMiddleOfBox;
         }
 
@@ -209,6 +168,17 @@
         }
 
         getBoxEdges();
+
+        function getHeights(box){
+            var pixelColumnMiddle  = context.getImageData(box[0],searchHeight,1,canvas.height-searchHeight);
+            var midData = pixelColumnMiddle.data;
+            for(var y = 0; y < midData.length; y+=4){
+                if(isBlackRGB()){
+
+                }
+            }
+        }
+
         console.log("BOXES: " + " FIRST BOX: " + firstBox + " SECOND BOX: " + secondBox + " THIRD BOX: " + thirdBox + " FOURTH BOX: " + fourthBox);
         drawLanes(firstBox);
         drawLanes(secondBox);
@@ -522,7 +492,7 @@
         context.drawImage(maskCanvas, 0, 0);
         context.save();
 
-    }
+    };
 
     /*
     Removes red markers, assumes the image is properly oriented 
@@ -616,6 +586,32 @@
             console.log(rgbToHsl(px.r, px.g, px.b));
         }
     }
+
+    function getMousePos(canvas, evt) {
+        var rect = canvas.getBoundingClientRect();
+        var mouseX = evt.clientX - rect.left;
+        var mouseY = evt.clientY - rect.top;
+        var p = context.getImageData(mouseX, mouseY, 1, 1).data;
+        hsl = rgbToHsl(p[0],p[1],p[2]);
+        return {
+            x: mouseX,
+            y: mouseY,
+            r: p[0],
+            g: p[1],
+            b: p[2],
+            h: hsl.h * 360,
+            s: hsl.s,
+            l: hsl.l
+        };
+    }
+
+    canvas.addEventListener('mousemove', function(evt) {
+        var mousePos = getMousePos(canvas, evt);
+        var message = 'Mouse position: ' + mousePos.x + ',' + mousePos.y +
+                "  :  Color: " + mousePos.r+ ',' +mousePos.g+ ',' +mousePos.b+
+                "  :  HSL: "+mousePos.h.toFixed(2)+ ',' +mousePos.s.toFixed(2)+ ',' +mousePos.l.toFixed(2);
+        $("span").text(message);
+    }, false);
 
 </script>
 </body>

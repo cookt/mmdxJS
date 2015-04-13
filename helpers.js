@@ -223,6 +223,45 @@ function foundFirstBoxEdge(data){
 }
 
 /**
+ *
+ * @param startX. Position along the row of data to start the search
+ * @param box. Array to fill with box width coordinates.
+ * @param data. This row data should be for a y coordinate in the middle of a black box (so it should contain all of the black boxes.)
+ * @returns {number}
+ */
+// Operational: we are given a row somewhere in the vertical middle of the black boxes. We go through that row and when we see the first edge
+// we assign it as the start width of the box. Then we keep going while we see black and assign the first not black pixel as the end width.
+// This is called four times for the four boxes.
+function findBlackBoxEdgesFromMiddle(startX,box,data, y) {
+    var lastX = 0;
+    for (var x = startX; x < data.length; x+=4) {
+        if (isBlackRGB(data[x],data[x+1],data[x+2])) {
+            //we found the first edge so add it to the box array
+            var checkedFurther = true;
+            for(var verifyX = x; verifyX < x+40; verifyX+=4) {
+                //context.fillStyle = "green";
+                //context.fillRect(verifyX/4, y, 3, 3 );
+                if (!isBlackRGB(data[verifyX],data[verifyX+1],data[verifyX+2])) {
+                    checkedFurther = false;
+                }
+            }
+            if(checkedFurther){
+                box.push(x/4);
+                while (isBlackRGB(data[x],data[x+1],data[x+2])) {
+                    context.fillStyle = "yellow";
+                    context.fillRect(x/4, y, 3, 3 );
+                    x+=4;
+                }
+                box.push(x/4);
+                lastX = x;
+            }
+        }
+    }
+    console.log("LAST: ",lastX/4);
+    return lastX/4;
+}
+
+/**
  * Draws lane profiles for searching
  * @param box
  */
@@ -295,3 +334,5 @@ var isRedOld = function(r,g,b){
         return false
     }
 };
+
+
