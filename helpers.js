@@ -198,3 +198,173 @@ function getRuntime(funct){
     $("span").text(message);
 }
 
+
+/***************                             BLACK BOX HELPERS                              *****************/
+/**
+ * Checks if the row has hit a black box.
+ * @param data (row of pixel data)
+ * @returns {boolean}
+ */
+function foundFirstBoxEdge(data){
+    for (var x = 0; x < data.length; x+=4) {
+        if (isBlackRGB(data[x],data[x+1],data[x+2])) {
+            var checkedFurther = true;
+            for(var verifyX = x; verifyX < x+40; verifyX+=4) {
+                if (!isBlackRGB(data[verifyX],data[verifyX+1],data[verifyX+2])) {
+                    checkedFurther = false;
+                }
+            }
+            if(checkedFurther){
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ *
+ * @param startX. Position along the row of data to start the search
+ * @param box. Array to fill with box width coordinates.
+ * @param data. This row data should be for a y coordinate in the middle of a black box (so it should contain all of the black boxes.)
+ * @returns {number}
+ */
+// Operational: we are given a row somewhere in the vertical middle of the black boxes. We go through that row and when we see the first edge
+// we assign it as the start width of the box. Then we keep going while we see black and assign the first not black pixel as the end width.
+// This is called four times for the four boxes.
+function findBlackBoxEdgesFromMiddle(startX,box,data, y) {
+    var lastX = 0;
+    for (var x = startX; x < data.length; x+=4) {
+        if (isBlackRGB(data[x],data[x+1],data[x+2])) {
+            //we found the first edge so add it to the box array
+            var checkedFurther = true;
+            for(var verifyX = x; verifyX < x+40; verifyX+=4) {
+                //context.fillStyle = "green";
+                //context.fillRect(verifyX/4, y, 3, 3 );
+                if (!isBlackRGB(data[verifyX],data[verifyX+1],data[verifyX+2])) {
+                    checkedFurther = false;
+                }
+            }
+            if(checkedFurther){
+                box.push(x/4);
+                while (isBlackRGB(data[x],data[x+1],data[x+2])) {
+                    context.fillStyle = "yellow";
+                    context.fillRect(x/4, y, 3, 3 );
+                    x+=4;
+                }
+                box.push(x/4);
+                lastX = x;
+            }
+        }
+    }
+    console.log("LAST: ",lastX/4);
+    return lastX/4;
+}
+
+/**
+ * Finds the vertical middle of the row of black boxes. We use this row to search because the tops and bottoms of the boxes aren't perfectly aligned.
+ * @returns {number}
+ */
+function getMiddleYOfBoxes() {
+    var startColumn = 0;
+    var horizontalMiddleOfBox = 0;
+    while (!foundFirstBoxEdge(data) && horizontalMiddleOfBox < 50) {
+        pixelRow = context.getImageData(startColumn, horizontalMiddleOfBox, searchWidth, 1);
+        data = pixelRow.data;
+        //console.log(horizontalMiddleOfBox);
+        horizontalMiddleOfBox++;
+    }
+    horizontalMiddleOfBox += 30;
+    return horizontalMiddleOfBox;
+}
+
+/**
+ * Fills the box arrays with their dimensions
+ */
+function getBoxEdges(){
+    var startColumn = 0;
+    //alert("here");
+    var horizontalMiddleOfBox = getMiddleYOfBoxes();
+    //alert("here2");
+    var pixelRowMiddle = context.getImageData(startColumn, horizontalMiddleOfBox, searchWidth, 1);
+    var midData = pixelRowMiddle.data;
+    findBlackBoxEdgesFromMiddle(startColumn,boxes,midData,horizontalMiddleOfBox);
+    firstBox = [boxes[0],boxes[1]];
+    secondBox = [boxes[2],boxes[3]];
+    thirdBox = [boxes[4],boxes[5]];
+    fourthBox = [boxes[6],boxes[7]];
+}
+
+/**
+ * Draws lane profiles for searching
+ * @param box
+ */
+function drawLanes(box){
+    context.fillStyle = "green";
+    context.fillRect(box[0], 0, 3, canvas.height);
+    context.fillRect(box[1], 0, 3, canvas.height);
+}
+
+
+
+/****************************                    TESTS                        *******************************/
+function colorRedBoxHSL() {
+
+    var imgData = context.getImageData(0, 0, canvas.width, canvas.height);
+    var data = imgData.data;
+    var colorshift = .33
+
+    for (var i = 0; i < data.length; i += 4) {
+        red = data[i + 0];
+        green = data[i + 1];
+        blue = data[i + 2];
+        alpha = data[i + 3];
+        var hsl = rgbToHsl(red, green, blue);
+        var hue = hsl.h * 360;
+
+        // change blueish pixels to the new color
+        if (((hue<=360 && hue >=357)
+            || (hue <=20)) && hsl.s > .8) {
+            var newRgb = hslToRgb(hsl.h + colorshift, 2, .7);
+            data[i + 0] = newRgb.r;
+            data[i + 1] = newRgb.g;
+            data[i + 2] = newRgb.b;
+            data[i + 3] = 255;
+        }
+    }
+    context.putImageData(imgData, 0, 0);
+}
+
+function colorRedBoxRGB() {
+
+    var imgData = context.getImageData(0, 0, canvas.width, canvas.height);
+    var data = imgData.data;
+    var colorshift = .33;
+    var red,green,blue,alpha;
+
+
+    for (var i = 0; i < data.length; i += 4) {
+        red = data[i + 0];
+        green = data[i + 1];
+        blue = data[i + 2];
+        alpha = data[i + 3];
+
+        // change blueish pixels to the new color
+        if (isRedOld(red,green, blue)) {
+            data[i + 0] = 0;
+            data[i + 1] = 255;
+            data[i + 2] = 0;
+            data[i + 3] = 255;
+        }
+    }
+    context.putImageData(imgData, 0, 0);
+}
+
+var isRedOld = function(r,g,b){
+    if (r<=255 && r >=230 && b < 70 && g < 70){
+        return true
+    }
+    else{
+        return false
+    }
+}
