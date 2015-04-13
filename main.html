@@ -1,51 +1,79 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-    <!-- Caman.js and tracking.js -->
-    <script src="https://dl.dropboxusercontent.com/s/9h6ddirr60ie1mv/jquery.min.js"></script>
-    <script src="https://dl.dropboxusercontent.com/s/ctgjvud6im9mwmx/tracking-min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/camanjs/4.1.2/caman.full.js"></script>
+    <!-- tracking.js -->
+    <script type="text/javascript" src="tracking.js"></script>
+
+    <!-- functions to get test images in base 64-->
+    <script type="text/javascript" src="getImage64.js"></script>
+
+    <script type="text/javascript" src="utils.js"></script>
+    <script type="text/javascript" src="helpers.js"></script>
+    <script type="text/javascript" src="data_structures.js"></script>
+    <script type="text/javascript" src="jquery.js"></script>
+
+    <script type="text/javascript" src="cornerdetect.js"></script>
 
 </head>
 <body>
 <div id = "container">
     <canvas id="canvas"></canvas>
+    <p> <span></span>.</p>
+    <p> Fast marker detection using tracking.js and Harris operator, option 2 </p>
+    <button type="button" onclick = "getRuntime(detect)"> Detect rectange </button>
+    <button type="button" onclick = "getRuntime(crop)"> Crop </button>
+    <button type="button" onclick = "getRuntime(rotate)"> Rotate </button>
+    <button type="button" onclick = "getRuntime(removeMarkers)"> Remove markers </button>
+    <button type="button" onclick = "getRuntime(getBlackBoxes)"> Find Black Boxes </button>
 
-    <p> Fast marker detection using tracking.js, option 2 </p>
-    <button type="button" onclick = "detectRectangle()"> Detect rectange </button>
-    <button type="button" onclick = "crop()"> Crop </button>
-    <button type="button" onclick = "rotate(corners[0],corners[1],corners[2],corners[3])"> Rotate </button>
-    <button type="button" onclick = "removeMarkers()"> Remove markers </button>
+    <p> Test Functions</p>
+    <button type="button" onclick = "getRuntime(oldRetectRectangle)"> Old Detect rectange </button>
+    <button type="button" onclick = "getRuntime(colorRedBoxHSL)"> HSL Color Red Box</button>
+    <button type="button" onclick = "getRuntime(colorRedBoxRGB)"> RGB Color Red Box</button>
+
 
 </div>
 <script>
     // file address: https://dl.dropboxusercontent.com/s/94xx26gfjrymr09/index.html
+
+    // Test images hosted on Dropbox
+    // var mmdx_image_normal = "https://dl.dropboxusercontent.com/s/qlf5rw12j6jz6mn/25c.png";
+    // var mmdx_image_tilted_left = "https://dl.dropboxusercontent.com/s/qma3hkf1q3iuaim/Mmdx_tilted_left.jpg";
+    // var mmdx_image_tilted_right = "https://dl.dropboxusercontent.com/s/t0819dq8xu1o4hh/mmdx_tilted.jpg?dl=0";
+
+
     var canvas = document.getElementById('canvas');
     var context = canvas.getContext('2d');
     var imageObj = new Image();
     var imageHeight, imageWidth;
     var imageData, pixels;
-    var redMax = 255; //need to check this values again
+
+    //values for identifying what is red
+    var redMax = 255; //need to check this values again (display dependancy)!!!
     var redMin = 180;
     var blueMax = 85;
     var greenMax = 85;
 
-    //vars for the tracker.js
+    //variables for the tracker.js
     var tracked_rect;
-    var rotated = false;
-    var corners = [];
-    // vars for handmade marker detection
-    var markerPoints = [];
-    var markerPointsChecked = [];
+    var markerRectangle;
+    
 
-    var mmdx_image_normal = "https://dl.dropboxusercontent.com/s/qlf5rw12j6jz6mn/25c.png?dl=0";
-    var mmdx_image_tilted_left = "https://dl.dropboxusercontent.com/s/qma3hkf1q3iuaim/Mmdx_tilted_left.jpg";
-    var mmdx_image_tilted_right = "https://dl.dropboxusercontent.com/s/t0819dq8xu1o4hh/mmdx_tilted.jpg?dl=0";
-    var mmdx_image = mmdx_image_tilted_right;
-    //var imageAddress = 'https://dl.dropboxusercontent.com/s/57emsqhec1ostv0/i.png';
+
+    //Test images in base64
+    var mmdx_image_normal = getTestImageNormal();
+    var mmdx_image_tilted_right = getTestImageRotatedRight();
+    var mmdx_image_tilted_left = getTestImageRotatedLeft();
+
+    //Actual image we are using
+    var mmdx_image = mmdx_image_tilted_left;
+
+
     imageObj.src = mmdx_image;
-    imageObj.crossOrigin = "anonymous";
+    imageObj.crossOrigin = "anonymous"; //just in case
 
+
+    //draw image to canvas
     imageObj.onload = function() {
         imageHeight = imageObj.height;
         imageWidth = imageObj.width;
@@ -53,6 +81,9 @@
         canvas.width = imageWidth;
         context.drawImage(imageObj,0, 0);
     };
+
+
+    //Register color tracking.js uses to identify markers
     tracking.ColorTracker.registerColor('marker', function(r, g, b) {
         if (isRedRGB(r,g,b)) {
             return true;
@@ -60,17 +91,180 @@
         return false;
     });
 
-    tracking.ColorTracker.registerColor('non-marker', function(r, g, b) {
-        if (!isRedRGB(r,g,b)) {
-            return true;
+
+    // PURE DEMO FUNCTION (to show how good cornderdetect.js is, does nothing for image processing)
+    var cornerDetectionDemo = function(){
+        // parameters for Harris corner detection
+        // blockSize: Neighborhood size (3×3 or 5×5)
+        // k: Harris detector free parameter (recommends 0.04 ~ 0.15)
+        // qualityLevel: Parameter characterizing the minimal accepted quality of image corners
+        var params = { blockSize: 3, k: 0.04, qualityLevel: 0.001 };
+        // img: ImageData object
+        // returns Array of detected corners
+        var img = context.getImageData(0,0,imageWidth, imageHeight);
+        pixels = img.data;
+        var corners = CornerDetector.detect(img, CornerDetector.HARRIS, params);
+        var nonzero = [];
+        for (var i = 0; i< corners.length; i++){
+            if (corners[i]!=0){
+                nonzero.push(i);
+            }
         }
-        return false;
-    });
+        console.log(nonzero);
+        for (var j=0; j< nonzero.length; j++){
+            var coords = getCoordsFromPixelOffset(nonzero[j], imageWidth, imageHeight);
+            context.beginPath();
+            context.arc(coords[0], coords[1], 3, 0, 2 * Math.PI, false);
+            context.lineWidth = 1;
+            context.strokeStyle = 'yellow';
+            context.stroke();
+        }
+        return corners;
+    }
+
+    function getBlackBoxes(){
+        //This is just for optimization might get rid of it if it causes problems
+        var searchWidth = canvas.width;
+        var searchHeight = canvas.height;
+        //coordinates of the black boxes
+        var boxes = [];
+        var firstBox = [];
+        var secondBox = [];
+        var thirdBox = [];
+        var fourthBox = [];
+        var pixelRow = context.getImageData(0, 0, searchWidth, 1);
+        var data = pixelRow.data;
+
+        /**
+         *
+         * @param startX. Position along the row of data to start the search
+         * @param box. Array to fill with box width coordinates.
+         * @param data. This row data should be for a y coordinate in the middle of a black box (so it should contain all of the black boxes.)
+         * @returns {number}
+         */
+// Operational: we are given a row somewhere in the vertical middle of the black boxes. We go through that row and when we see the first edge
+// we assign it as the start width of the box. Then we keep going while we see black and assign the first not black pixel as the end width.
+// This is called four times for the four boxes.
+        function findBlackBoxEdgesFromMiddle(startX,box,data, y) {
+            var lastX = 0;
+            for (var x = startX; x < data.length; x+=4) {
+                if (isBlackRGB(data[x],data[x+1],data[x+2])) {
+                    //we found the first edge so add it to the box array
+                    var checkedFurther = true;
+                    for(var verifyX = x; verifyX < x+40; verifyX+=4) {
+                        //context.fillStyle = "green";
+                        //context.fillRect(verifyX/4, y, 3, 3 );
+                        if (!isBlackRGB(data[verifyX],data[verifyX+1],data[verifyX+2])) {
+                            checkedFurther = false;
+                        }
+                    }
+                    if(checkedFurther){
+                        box.push(x/4);
+                        while (isBlackRGB(data[x],data[x+1],data[x+2])) {
+                            context.fillStyle = "yellow";
+                            context.fillRect(x/4, y, 3, 3 );
+                            x+=4;
+                        }
+                        box.push(x/4);
+                        lastX = x;
+                    }
+                }
+            }
+            console.log("LAST: ",lastX/4);
+            return lastX/4;
+        }
+
+        /**
+         * Finds the vertical middle of the row of black boxes. We use this row to search because the tops and bottoms of the boxes aren't perfectly aligned.
+         * @returns {number}
+         */
+        function getMiddleYOfBoxes() {
+            var startColumn = 0;
+            var horizontalMiddleOfBox = 0;
+            while (!foundFirstBoxEdge(data) && horizontalMiddleOfBox < 50) {
+                pixelRow = context.getImageData(startColumn, horizontalMiddleOfBox, searchWidth, 1);
+                data = pixelRow.data;
+                //console.log(horizontalMiddleOfBox);
+                horizontalMiddleOfBox++;
+            }
+            horizontalMiddleOfBox += 30;
+            return horizontalMiddleOfBox;
+        }
+
+        /**
+         * Fills the box arrays with their dimensions
+         */
+        function getBoxEdges(){
+            var startColumn = 0;
+            //alert("here");
+            var horizontalMiddleOfBox = getMiddleYOfBoxes();
+            //alert("here2");
+            var pixelRowMiddle = context.getImageData(startColumn, horizontalMiddleOfBox, searchWidth, 1);
+            var midData = pixelRowMiddle.data;
+            findBlackBoxEdgesFromMiddle(startColumn,boxes,midData,horizontalMiddleOfBox);
+            firstBox = [boxes[0],boxes[1]];
+            secondBox = [boxes[2],boxes[3]];
+            thirdBox = [boxes[4],boxes[5]];
+            fourthBox = [boxes[6],boxes[7]];
+        }
+
+        getBoxEdges();
+        console.log("BOXES: " + " FIRST BOX: " + firstBox + " SECOND BOX: " + secondBox + " THIRD BOX: " + thirdBox + " FOURTH BOX: " + fourthBox);
+        drawLanes(firstBox);
+        drawLanes(secondBox);
+        drawLanes(thirdBox);
+        drawLanes(fourthBox);
+    }
 
 
-    //DETECTION using tracking.js
-    var detectRectangle = function(){
+    var detectCorners = function(){
+        // parameters for Harris corner detection
+        // blockSize: Neighborhood size (3×3 or 5×5)
+        // k: Harris detector free parameter (recommends 0.04 ~ 0.15)
+        // qualityLevel: Parameter characterizing the minimal accepted quality of image corners
+        var params = {blockSize: 5, k: 0.04, qualityLevel: 0.01 };
+        // img: ImageData object
+        // returns Array of detected corners
+        var img = context.getImageData(0,0,imageWidth, imageHeight);
+        pixels = img.data;
+        var corners = CornerDetector.detect(img, CornerDetector.HARRIS, params);//all corners
+        var nonzero = [];
+        for (var i = 0; i< corners.length; i++){
+            if (corners[i]!=0){
+                nonzero.push(i);
+            }
+        }
+        //filter by color
+        var redCorners = [];
+        for (var j=0; j< nonzero.length; j++){
+            var coords = getCoordsFromPixelOffset(nonzero[j], imageWidth, imageHeight);
+            if (isAreaRed(coords[0],coords[1], 2, pixels, imageWidth, imageHeight)){
+                redCorners.push(new Point(coords[0], coords[1]));
+                //visually show detected points
+                context.beginPath();
+                context.arc(coords[0], coords[1], 5, 0, 2 * Math.PI);
+                context.lineWidth = 2;
+                context.strokeStyle = 'yellow';
+                context.stroke();
+            }
 
+        }
+
+        return redCorners;
+    }
+    /**
+    
+    DETECTION:
+
+    Uses tracking.js to find markers (color details are specified above)
+    Finds a rectangle around a detected object 
+         (tracker returns "rect" object {x: value, y:value, height:value, width:value, color:value})
+    If not rotated, will draw the abovementioned rectange and use its corners
+    If rotated, find the intersection of the actual rectange with the abovemention rectangle
+    and assigns corners correctly
+    */
+    
+    var detect = function(){
 
         imageData = context.getImageData(0,0,imageWidth, imageHeight);
         pixels = imageData.data;
@@ -80,109 +274,122 @@
         var tracker = new tracking.ColorTracker(['marker']);
         tracker.on('track', function(event) {
             event.data.forEach(function(rect) {
-                console.log("track");
-                console.log(rect);
                 tracked_rect = rect;
+                var x = rect.x;
+                var y = rect.y;
+                var w = rect.width;
+                var h = rect.height;
+                //corners might change
+                var corners = [new Point(x,y),new Point(x+w, y+h), new Point(x+w,y), new Point(x, y+h)];
+                
 
-                checkIfRotated();
+                var rotated = checkIfRotated();
+                markerRectangle = new Rectangle(corners, rotated);
 
-                if (rotated){
+                if (markerRectangle.isRotated()){
                     findCorners();
                 }
-                else{
-                    drawStraightRectange(rect.x, rect.y, rect.width, rect.height);
-                }
-
+                drawRectangle(markerRectangle.getCorners());
             });
         });
-        tracking.track('#canvas', tracker);
+        tracking.track('#canvas', tracker); //start tracking
 
-    }
+    };
 
+    /*
+    Moves along the detected rectangle, if the majority of the points are red, assumes
+    tracker found a correct rectangle
+    */
     var checkIfRotated = function(){
-        var threshhold = .1;
+        var threshhold = .1;  //NEED TO ADJUST/TEST
         var x = tracked_rect.x;
         var y = tracked_rect.y;
         var w = tracked_rect.width;
         var h = tracked_rect.height;
         var numPoints = 2*(w+h);
         var countRed = 0;
+        //move along the top edge
         for (var i = 0; i<w; i++){
             var px = getPixelRGB(pixels, x+i, y, imageWidth, imageWidth);
             if (isRed(px)){
                 countRed++
             }
         }
+        //bottom edge
         for (var i = 0; i<w; i++){
             var px = getPixelRGB(pixels, x+i, y+h, imageWidth, imageWidth);
             if (isRed(px)){
                 countRed++
             }
         }
+
+        //left edge
         for (var i = 0; i<h; i++){
             var px = getPixelRGB(pixels, x, y+i, imageWidth, imageWidth);
             if (isRed(px)){
                 countRed++
             }
         }
+        //right edge
         for (var i = 0; i<h; i++){
             var px = getPixelRGB(pixels, x+w, y+i, imageWidth, imageWidth);
             if (isRed(px)){
                 countRed++
             }
         }
-        console.log("count red");
-        console.log(countRed);
-        console.log("num points");
-        console.log(numPoints);
         if (countRed/numPoints < threshhold){
             console.log("Rotated");
-            rotated = true;
             return true;
         }
         else{
             console.log("Not Rotated");
-            rotated = false;
             return false;
         }
-    }
+    };
+
+    /*
+    If oldCheckIfRotated returns true, finds the corners of the rotated markers
+    */
     var findCorners = function(){
         var x = tracked_rect.x;
         var y = tracked_rect.y;
         var w = tracked_rect.width;
         var h = tracked_rect.height;
-        var c1, c2, c3, c4;
+        var c1, c2, c3, c4; //corners
+        
         //check possible combinations:
+
         var inc = -1;
 
+        // walk along the top rect edge (and lines right below), find the first points where 
+        // the detected rectange intersects the marker (first red point)
         while (!c1){
             inc++;
-            //upper line
             for (var i = 0; i < w; i++){
                 var px = getPixelRGB(pixels, x+i, y+inc, imageWidth, imageWidth);
                 if (isRed(px)){
-                    c1 = [x+i, y];
+                    c1 = new Point(x+i, y);
                     console.log("C1");
                     console.log(c1);
                     break;
                 }
             }
         }
-
+        //same for the bottom rect egde
         inc = -1;
         while (!c2){
             inc++;
-            //lower line
             for (var i = 0; i < w; i++){
                 var px = getPixelRGB(pixels, x+i, y+h-inc, imageWidth, imageWidth);
                 if (isRed(px)){
-                    c2 = [x+i, y+h];
+                    c2 = new Point(x+i, y+h);
                     console.log("C2");
                     console.log(c2);
                     break;
                 }
             }
         }
+        // left rect edge
         inc = -1;
         while (!c3){
             inc++;
@@ -190,127 +397,106 @@
             for (var i = 0; i < h; i++){
                 var px = getPixelRGB(pixels, x+inc, y+i, imageWidth, imageWidth);
                 if (isRed(px)){
-                    c3 = [x, y+i];
+                    c3 = new Point(x, y+i);
                     console.log("C3");
                     console.log(c3);
                     break;
                 }
             }
         }
+        // right rect edge
         while (!c4){
             inc++;
-            //right line
             for (var i = 0; i < h; i++){
                 var px = getPixelRGB(pixels, x+w-inc, y+i, imageWidth, imageWidth);
                 if (isRed(px)){
-                    c4 = [x+w, y+i];
+                    c4 = new Point(x+w, y+i);
                     console.log("C4");
                     console.log(c4);
                     break;
                 }
             }
         }
+        //adjust corners according to the Harris operator
+        var cornersHarris = detectCorners();
+        //drawRotatedRectangle(c1,c2,c3,c4);
+        var corners = [c1,c2,c3,c4];
+        for (var i = 0; i< 4; i++){
+            var closest = findClosest(corners[i], cornersHarris, imageWidth*0.02);
+            if (closest){
+                corners[i] = closest;
+            }     
 
-        drawRotatedRectangle(c1,c2,c3,c4);
-        corners = [c1,c2,c3,c4];
+        }
+        markerRectangle.setCorners(corners);
 
+    };
 
-    }
-
-
-    var drawStraightRectange = function(x, y, w, h) {
+    var drawRectangle = function(points){
+        var c1 = points[0];
+        var c2 = points[1];
+        var c3 = points[2];
+        var c4 = points[3];
+        console.log("drawCorners:",c1,c2,c3,c4 );
         context.beginPath();
-        context.moveTo(x,y);
-        context.lineTo(x+w, y);
-        context.stroke();
-
-        context.moveTo(x+w, y);
-        context.lineTo(x+w, y+h);
-        context.stroke();
-
-        context.moveTo(x+w, y+h);
-        context.lineTo(x, y+h);
-        context.stroke();
-
-        context.moveTo(x, y+h);
-        context.lineTo(x, y);
-        context.stroke();
-        corners = [[x,y],[x+w, y+h], [x+w,y], [x, y+h]];
-
-    }
-
-    var drawRotatedRectangle = function(c1,c2,c3,c4) {
-        console.log("drawRotatedRectangle");
-        console.log(c1);
         context.beginPath();
-        context.moveTo(c1[0],c1[1]);
-        context.lineTo(c3[0],c3[1]);
-        context.lineTo(c2[0],c2[1]);
-        context.lineTo(c4[0],c4[1]);
-        context.lineTo(c1[0],c1[1]);
+        context.moveTo(c1.x,c1.y);
+        context.lineTo(c3.x,c3.y);
+        context.lineTo(c2.x,c2.y);
+        context.lineTo(c4.x,c4.y);
+        //context.lineTo(c1.x,c1.y);
         context.closePath();
         context.stroke();
-    }
+    };
 
-
-    var rotate = function (c1,c2,c3,c4){
-        if (!rotated){
+    /*
+    Rotates the image based on the angle between the top line of the rect (from tracker)
+    and new rotated rect (whose corners are found in findCorners())
+    */
+    var rotate = function (){
+        if (!markerRectangle.isRotated()){
             alert("no need to rotate");
             return;
         }
-        //rotate 10% more
-        var padding = .1;
-        var croppedImageURL = canvas.toDataURL();
-        var croppedImage = new Image();
-        croppedImage.src = croppedImageURL;
 
-        console.log("rotating");
-        console.log(c1[1]);
-        console.log(c3[1]);
-        //find upper left corner
-        var uc = findUpperCorner(c1,c2,c3,c4);
-        console.log("UPPER CORNER");
-        console.log(uc);
+        var c1 = markerRectangle.getCorners()[0];
+        var c2 = markerRectangle.getCorners()[1];
+        var c3 = markerRectangle.getCorners()[2];
+        var c4 = markerRectangle.getCorners()[3];
+        
+        //save image data so we can modify canvas
+        var imageURL = canvas.toDataURL();
+        var image = new Image();
+        image.src = imageURL;
 
-        var side = findHighestSideCorner(c1,c2,c3,c4);
-        console.log("SIDE");
-        console.log(side);
+        var angle = markerRectangle.findAngleOfRotation();
 
-        // B = uc, A = uc with the same y but different x, C = side
-        var A = {"x": uc[0]+Math.round(tracked_rect.width/2), "y":uc[1]};
-        var B = {"x":uc[0], "y": uc[1]};
-        var C = {"x": side[0], "y":side[1]};
-        var angle = findAngle(A,B,C);
-        console.log("angle");
-        console.log(angle);
-        var center = [Math.round(tracked_rect.x+tracked_rect.width/2), Math.round(tracked_rect.y+tracked_rect.height/2)];
-        console.log("center");
-        console.log(center);
+        //find the center to rotate about
+        var center = new Point(Math.round(tracked_rect.x+tracked_rect.width/2), Math.round(tracked_rect.y+tracked_rect.height/2));
+        context.translate(1*center.x, 1*center.y);
+        
         //context.clearRect(0,0,canvas.width,canvas.height);
         context.save();
-        context.translate(center[0], center[1]);
-        // ccw
-        if (side[0]>uc[0]){
-            console.log("CCW");
-            context.rotate(-1*angle*(1+padding));
-
-        }//cw
-        else{
-            console.log("CW");
-            context.rotate((Math.PI-angle)*(1+padding));
-        }
-        context.translate(-1*center[0], -1*center[1]);
-        context.drawImage(croppedImage,0, 0);
+        context.rotate(angle.radians);
+        context.translate(-1*center.x, -1*center.y);
+        context.drawImage(image,0, 0);
         context.restore();
+        // translate back to 0,0 coordinates
+        context.translate(-1*center.x, -1*center.y);
         rotated = false;
 
-    }
+    };
 
+    /*
+    Crops the image by its markers (either rect from tracker or adjusted corners)
+    Assumes corners are known
+    */
     var crop = function(){
-        var c1 = corners[0];
-        var c2 = corners[1];
-        var c3 = corners[2];
-        var c4 = corners[3];
+        var c1 = markerRectangle.getCorners()[0];
+        var c2 = markerRectangle.getCorners()[1];
+        var c3 = markerRectangle.getCorners()[2];
+        var c4 = markerRectangle.getCorners()[3];
+        console.log("corners: ",c1,c2,c3,c4);
 
         // Create a canvas that we will use as a mask
         var maskCanvas = document.createElement('canvas');
@@ -326,17 +512,21 @@
         maskCtx.globalCompositeOperation = 'xor';
         // Draw the shape you want to take out
         maskCtx.beginPath();
-        maskCtx.moveTo(c1[0],c1[1]);
-        maskCtx.lineTo(c3[0],c3[1]);
-        maskCtx.lineTo(c2[0],c2[1]);
-        maskCtx.lineTo(c4[0],c4[1]);
-        maskCtx.lineTo(c1[0],c1[1]);
+        maskCtx.moveTo(c1.x,c1.y);
+        maskCtx.lineTo(c3.x,c3.y);
+        maskCtx.lineTo(c2.x,c2.y);
+        maskCtx.lineTo(c4.x,c4.y);
+        maskCtx.lineTo(c1.x,c1.y);
         maskCtx.closePath();
         maskCtx.fill();
         context.drawImage(maskCanvas, 0, 0);
         context.save();
+
     }
 
+    /*
+    Removes red markers, assumes the image is properly oriented 
+    */
     var removeMarkers = function(){
         var padding = 10;
         console.log("removing");
@@ -346,54 +536,58 @@
         imageData = context.getImageData(0,0,w, h);
         pixels = imageData.data;
         var y = 0;
-        //look for beginning of the edge
+        //look for beginning of the top edge
         while(!(isRed(getPixelRGB(pixels, Math.round(w/2),y, w, h)))){
             y++;
         }
-        //end of the edge
+        //end of the top edge
         while (isRed(getPixelRGB(pixels, Math.round(w/2),y, w, h))) {
             y++;
         }
-        upperEdge = y-1;
-        //look for beginning of the edge
+        upperEdge = y-1 + padding;
+
+        //look for beginning of the bottom edge
         y = h;
         while(!(isRed(getPixelRGB(pixels, Math.round(w/2),y, w, h)))){
             y--;
         }
-        //end of the edge
+        //end of the bottom edge
         while (isRed(getPixelRGB(pixels, Math.round(w/2),y, w, h))) {
             y--;
         }
-        lowerEdge = y+1;
+        lowerEdge = y+1 + padding;
 
-        //look for beginning of the edge
+        //look for beginning of the left edge
         var x = 0;
         while(!(isRed(getPixelRGB(pixels, x, Math.round(h/2), w, h)))){
             x++;
         }
-        //end of the edge
+        //end of the right edge
         while (isRed(getPixelRGB(pixels, x,Math.round(h/2), w, h))) {
             x++;
         }
-        leftEdge = x+1;
+        leftEdge = x+1 + padding;
 
         var x = w;
         while(!(isRed(getPixelRGB(pixels, x, Math.round(h/2), w, h)))){
             x--;
         }
-        //end of the edge
+        //end of the right edge
         while (isRed(getPixelRGB(pixels, x,Math.round(h/2), w, h))) {
             x--;
         }
-        rightEdge = x-1;
+        rightEdge = x-1 + padding;
+        console.log(leftEdge, rightEdge, upperEdge, lowerEdge);
+        context.drawImage(canvas, leftEdge, upperEdge, rightEdge - leftEdge, lowerEdge - upperEdge, 0, 0, w, h);
 
-        console
+        /*
         for (var x = 0; x < w; x++){
             for (var y = 0; y < h; y++){
                 var px = getPixelRGB(pixels, x, y, w,h);
 
                 if (!(x >= leftEdge+padding && x <= rightEdge-padding && y >= upperEdge+padding && y <= lowerEdge-padding)){
                     var position = getPixelPosition(x, y, w,h);
+                    //set everything outside of the image to white
                     pixels[position] = 255;
                     pixels[position+1] = 255;
                     pixels[position+2] = 255;
@@ -401,178 +595,14 @@
 
             }
         }
+        console.log(leftEdge, rightEdge, upperEdge, lowerEdge);
         context.putImageData(imageData,0,0);
+        */
 
 
     }
 
 
-
-    // HELPERS
-    var getPixelRGB = function(pixels, x,y, imageWidth, imageHeight){
-        var red = pixels[y*imageWidth*4+x*4];
-        var green = pixels[y*imageWidth*4+x*4+1];
-        var blue = pixels[y*imageWidth*4+x*4+2];
-        return {"r":red, "g":green, "b":blue}
-    }
-
-
-    function rgbToHsl(r, g, b) {
-        r /= 255, g /= 255, b /= 255;
-        var max = Math.max(r, g, b),
-                min = Math.min(r, g, b);
-        var h, s, l = (max + min) / 2;
-
-        if (max == min) {
-            h = s = 0; // achromatic
-        } else {
-            var d = max - min;
-            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-            switch (max) {
-                case r:
-                    h = (g - b) / d + (g < b ? 6 : 0);
-                    break;
-                case g:
-                    h = (b - r) / d + 2;
-                    break;
-                case b:
-                    h = (r - g) / d + 4;
-                    break;
-            }
-            h /= 6;
-        }
-
-        return ({
-            h: h,
-            s: s,
-            l: l,
-        });
-    }
-
-    function hslToRgb(h, s, l) {
-        var r, g, b;
-
-        if (s == 0) {
-            r = g = b = l; // achromatic
-        } else {
-            function hue2rgb(p, q, t) {
-                if (t < 0) t += 1;
-                if (t > 1) t -= 1;
-                if (t < 1 / 6) return p + (q - p) * 6 * t;
-                if (t < 1 / 2) return q;
-                if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-                return p;
-            }
-
-            var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-            var p = 2 * l - q;
-            r = hue2rgb(p, q, h + 1 / 3);
-            g = hue2rgb(p, q, h);
-            b = hue2rgb(p, q, h - 1 / 3);
-        }
-
-        return ({
-            r: Math.round(r * 255),
-            g: Math.round(g * 255),
-            b: Math.round(b * 255),
-        });
-    }
-
-    var  getPixelPosition = function(x, y, imageWidth, imageHeight){
-        return y*imageWidth*4+x*4;
-    }
-    var isRed = function(px){
-        var  hsl = rgbToHsl(px.r, px.g,px.b);
-        var hue = hsl.h * 360;
-        if (((hue<=360 && hue >=357) || (hue <=20)) && hsl.s > .7){
-            return true
-        }
-        else{
-            return false
-        }
-    };
-
-    function isRedRGB(r,g,b){
-        var  hsl = rgbToHsl(r, g, b);
-        var hue = hsl.h * 360;
-        if (((hue<=360 && hue >=357) || (hue <=20)) && hsl.s > .7){
-            return true
-        }
-        else{
-            return false
-        }
-    }
-
-
-    function findUpperCorner(a,b,c,d){
-        var y = [a[1], b[1], c[1], d[1]].minElement();
-        if (a[1]==y){
-            return a;
-        }
-        else if (b[1]==y){
-            return b;
-        }
-        else if (c[1]==y){
-            return c;
-        }
-        else if (d[1]==y){
-            return d;
-        }
-        //should never get here
-        else{
-            alert("Error in findUpperCorner function");
-        }
-    }
-    function findHighestSideCorner(a,b,c,d){
-        var ys = [a[1], b[1], c[1], d[1]];
-
-        ys.sort(function(a, b){return a-b});
-        console.log("sort");
-        console.log(ys);
-        //second highest element
-        var y = ys[1];
-        if (a[1]==y){
-            return a;
-        }
-        else if (b[1]==y){
-            return b;
-        }
-        else if (c[1]==y){
-            return c;
-        }
-        else if (d[1]==y){
-            return d;
-        }
-        //should never get here
-        else{
-            alert("Error in findUpperCorner function");
-        }
-    }
-    /*
-     * Calculates the angle ABC (in radians)
-     *
-     * A first point
-     * C second point
-     * B center point
-     */
-    function findAngle(A,B,C) {
-        var AB = Math.sqrt(Math.pow(B.x-A.x,2)+ Math.pow(B.y-A.y,2));
-        var BC = Math.sqrt(Math.pow(B.x-C.x,2)+ Math.pow(B.y-C.y,2));
-        var AC = Math.sqrt(Math.pow(C.x-A.x,2)+ Math.pow(C.y-A.y,2));
-        return Math.acos((BC*BC+AB*AB-AC*AC)/(2*BC*AB));
-    }
-    function rotateCorner(angle, corner, center){
-        var pointX = corner[0];
-        var pointY = corner[1];
-        var originX = center[0];
-        var originY = center[1];
-        var x = Math.cos(angle) * (pointX) - Math.sin(angle) * (pointY);
-        var y = Math.sin(angle) * (pointX) + Math.cos(angle) * (pointY);
-        return [x,y]
-    }
-
-
-    // utils
     document.onmousedown = printCoordsAndRGB;
 
     function printCoordsAndRGB(e){
@@ -581,32 +611,12 @@
         var coords = "Mouse x = "+x+", mouse y = "+y;
         console.log(coords);
         if (pixels){
-            console.log(getPixelRGB(pixels, x,y, imageWidth,imageHeight));
+            var px = getPixelRGB(pixels, x,y, imageWidth,imageHeight);
+            console.log(px);
+            console.log(rgbToHsl(px.r, px.g, px.b));
         }
-
-        Array.prototype.minElement = function(){
-            var n = this.length;
-            var minElement = this[0];
-            for (var i = 0; i< n; i++){
-                if (this[i]<= minElement){
-                    minElement = this[i];
-                }
-            }
-            return minElement;
-        }
-
-        Array.prototype.maxElement = function(){
-            var n = this.length;
-            var maxElement = this[0];
-            for (var i = 0; i< n; i++){
-                if (this[i]>= maxElement){
-                    maxElement = this[i];
-                }
-            }
-            return maxElement;
-        }
-
     }
+
 </script>
 </body>
 </html>    
