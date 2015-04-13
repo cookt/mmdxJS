@@ -29,6 +29,21 @@ var isAreaRed = function(x,y, areaSize, pixels, imageWidth, imageHeight){
     return red/(areaSize*areaSize) > threshold;
 }
 
+var isAreaBlack = function(x,y, areaSize, pixels, imageWidth, imageHeight){
+    var threshold = 0.75;//lowest fraction of black points
+    var black = 0;
+    for(var i = x-areaSize; i < x+areaSize; i++){
+        for(var j = y-areaSize; j < y+areaSize; j++){
+            var px = getPixelRGB(pixels, i,j, imageWidth, imageHeight);
+            if (isBlack(px)){
+                black ++;
+            }
+        }
+    }
+
+    return black/(areaSize*areaSize) > threshold;
+}
+
 function rgbToHsl(r, g, b) {
     r /= 255, g /= 255, b /= 255;
     var max = Math.max(r, g, b),
@@ -104,6 +119,26 @@ var isRed = function(px){
     }
 };
 
+var isBlack = function(px){
+    var  hsl = rgbToHsl(px.r, px.g,px.b);
+    if (hsl.l <.1){
+        return true
+    }
+    else{
+        return false
+    }
+};
+
+var isBlackRGB = function(r,g,b){
+    var  hsl = rgbToHsl(r, g, b);
+    if (hsl.l <.1){
+        return true
+    }
+    else{
+        return false
+    }
+};
+
 function isRedRGB(r,g,b){
     var  hsl = rgbToHsl(r, g, b);
     var hue = hsl.h * 360;
@@ -114,8 +149,6 @@ function isRedRGB(r,g,b){
         return false
     }
 }
-
-
 
 /*
  * Calculates the angle ABC (in radians)
@@ -157,3 +190,11 @@ function findClosest(A,listB, error){
     return minDistPoint;
 
 }
+function getRuntime(funct){
+    var t0 = performance.now();
+    funct();
+    var t1 = performance.now();
+    var message = "Call to function took " + (t1 - t0) + " milliseconds.";
+    $("span").text(message);
+}
+
