@@ -367,4 +367,4 @@ var isRedOld = function(r,g,b){
     else{
         return false
     }
-}
+};
