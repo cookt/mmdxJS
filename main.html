@@ -16,17 +16,21 @@
 
 </head>
 <body>
-<p> <span></span>.</p>
 <div id = "container">
     <canvas id="canvas"></canvas>
-
+    <p> <span></span>.</p>
     <p> Fast marker detection using tracking.js and Harris operator, option 2 </p>
-    <button type="button" onclick = "getRuntime(oldRetectRectangle)"> Old Detect rectange </button>
     <button type="button" onclick = "getRuntime(detect)"> Detect rectange </button>
     <button type="button" onclick = "getRuntime(crop)"> Crop </button>
-    <button type="button" onclick = "rotate()"> Rotate </button>
-    <button type="button" onclick = "removeMarkers()"> Remove markers </button>
-    <button type="button" onclick = "getBlackBoxes()"> Find Black Boxes </button>
+    <button type="button" onclick = "getRuntime(rotate)"> Rotate </button>
+    <button type="button" onclick = "getRuntime(removeMarkers)"> Remove markers </button>
+    <button type="button" onclick = "getRuntime(getBlackBoxes)"> Find Black Boxes </button>
+
+    <p> Test Functions</p>
+    <button type="button" onclick = "getRuntime(oldRetectRectangle)"> Old Detect rectange </button>
+    <button type="button" onclick = "getRuntime(colorRedBoxHSL)"> HSL Color Red Box</button>
+    <button type="button" onclick = "getRuntime(colorRedBoxRGB)"> RGB Color Red Box</button>
+
 
 </div>
 <script>
@@ -53,16 +57,15 @@
     //variables for the tracker.js
     var tracked_rect;
     var markerRectangle;
-    
-
 
     //Test images in base64
     var mmdx_image_normal = getTestImageNormal();
     var mmdx_image_tilted_right = getTestImageRotatedRight();
     var mmdx_image_tilted_left = getTestImageRotatedLeft();
+    var mmdx_image_tilted_left2 = getTestImageRotatedLeft2();
 
     //Actual image we are using
-    var mmdx_image = mmdx_image_tilted_left;
+    var mmdx_image = mmdx_image_tilted_right;
 
 
     imageObj.src = mmdx_image;
@@ -118,46 +121,10 @@
         return corners;
     }
 
-    var harrisFindBlackBoxes = function(){
-        // parameters for Harris corner detection
-        // blockSize: Neighborhood size (3×3 or 5×5)
-        // k: Harris detector free parameter (recommends 0.04 ~ 0.15)
-        // qualityLevel: Parameter characterizing the minimal accepted quality of image corners
-        var params = {blockSize: 5, k: 0.04, qualityLevel: 0.01 };
-        // img: ImageData object
-        // returns Array of detected corners
-        var img = context.getImageData(0,0,imageWidth, imageHeight);
-        pixels = img.data;
-        var corners = CornerDetector.detect(img, CornerDetector.HARRIS, params);//all corners
-        var nonzero = [];
-        for (var i = 0; i< corners.length; i++){
-            if (corners[i]!=0){
-                nonzero.push(i);
-            }
-        }
-        //filter by color
-        var blackCorners = [];
-        for (var j=0; j< nonzero.length; j++){
-            var coords = getCoordsFromPixelOffset(nonzero[j], imageWidth, imageHeight);
-            if (isAreaBlack(coords[0],coords[1], 2, pixels, imageWidth, imageHeight)){
-                blackCorners.push(new Point(coords[0], coords[1]));
-                //visually show detected points
-                context.beginPath();
-                context.arc(coords[0], coords[1], 5, 0, 2 * Math.PI);
-                context.lineWidth = 2;
-                context.strokeStyle = 'green';
-                context.stroke();
-            }
-            
-        }
-
-        return blackCorners;
-    }
-
     function getBlackBoxes(){
         //This is just for optimization might get rid of it if it causes problems
         var searchWidth = canvas.width;
-        var searchHeight = canvas.height;
+        var searchHeight = canvas.height/2;
         //coordinates of the black boxes
         var boxes = [];
         var firstBox = [];
@@ -166,67 +133,6 @@
         var fourthBox = [];
         var pixelRow = context.getImageData(0, 0, searchWidth, 1);
         var data = pixelRow.data;
-
-        /**
-         * Checks if the row has hit a black box.
-         * @param data (row of pixel data)
-         * @returns {boolean}
-         */
-        function foundFirstBoxEdge(data){
-            for (var x = 0; x < data.length; x+=4) {
-                if (isBlackRGB(data[x],data[x+1],data[x+2])) {
-                    var checkedFurther = true;
-                    for(var verifyX = x; verifyX < x+40; verifyX+=4) {
-                        if (!isBlackRGB(data[verifyX],data[verifyX+1],data[verifyX+2])) {
-                            checkedFurther = false;
-                        }
-                    }
-                    if(checkedFurther){
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-
-        /**
-         *
-         * @param startX. Position along the row of data to start the search
-         * @param box. Array to fill with box width coordinates.
-         * @param data. This row data should be for a y coordinate in the middle of a black box (so it should contain all of the black boxes.)
-         * @returns {number}
-         */
-        // Operational: we are given a row somewhere in the vertical middle of the black boxes. We go through that row and when we see the first edge
-        // we assign it as the start width of the box. Then we keep going while we see black and assign the first not black pixel as the end width.
-        // This is called four times for the four boxes.
-        function findBlackBoxEdgesFromMiddle(startX,box,data, y) {
-            var lastX = 0;
-            for (var x = startX; x < data.length; x+=4) {
-                if (isBlackRGB(data[x],data[x+1],data[x+2])) {
-                    //we found the first edge so add it to the box array
-                    var checkedFurther = true;
-                    for(var verifyX = x; verifyX < x+40; verifyX+=4) {
-                        //context.fillStyle = "green";
-                        //context.fillRect(verifyX/4, y, 3, 3 );
-                        if (!isBlackRGB(data[verifyX],data[verifyX+1],data[verifyX+2])) {
-                            checkedFurther = false;
-                        }
-                    }
-                    if(checkedFurther){
-                        box.push(x/4);
-                        while (isBlackRGB(data[x],data[x+1],data[x+2])) {
-                            context.fillStyle = "yellow";
-                            context.fillRect(x/4, y, 3, 3 );
-                            x+=4;
-                        }
-                        box.push(x/4);
-                        lastX = x;
-                    }
-                }
-            }
-            console.log("LAST: ",lastX/4);
-            return lastX/4;
-        }
 
         /**
          * Finds the vertical middle of the row of black boxes. We use this row to search because the tops and bottoms of the boxes aren't perfectly aligned.
@@ -241,7 +147,7 @@
                 //console.log(horizontalMiddleOfBox);
                 horizontalMiddleOfBox++;
             }
-            horizontalMiddleOfBox += 30;
+            horizontalMiddleOfBox += canvas.height * .04;
             return horizontalMiddleOfBox;
         }
 
@@ -262,16 +168,18 @@
             fourthBox = [boxes[6],boxes[7]];
         }
 
-        /**
-         * Draws lane profiles for searching
-         * @param box
-         */
-        function drawLanes(box){
-            context.fillStyle = "green";
-            context.fillRect(box[0], 0, 3, canvas.height);
-            context.fillRect(box[1], 0, 3, canvas.height);
-        }
         getBoxEdges();
+
+        function getHeights(box){
+            var pixelColumnMiddle  = context.getImageData(box[0],searchHeight,1,canvas.height-searchHeight);
+            var midData = pixelColumnMiddle.data;
+            for(var y = 0; y < midData.length; y+=4){
+                if(isBlackRGB()){
+
+                }
+            }
+        }
+
         console.log("BOXES: " + " FIRST BOX: " + firstBox + " SECOND BOX: " + secondBox + " THIRD BOX: " + thirdBox + " FOURTH BOX: " + fourthBox);
         drawLanes(firstBox);
         drawLanes(secondBox);
@@ -568,7 +476,7 @@
         maskCanvas.height = canvas.height;
         var maskCtx = maskCanvas.getContext('2d');
         // This color is the one of the filled shape
-        maskCtx.fillStyle = "yellow";
+        maskCtx.fillStyle = "white";
         // Fill the mask
         maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
         // Set xor operation
@@ -585,7 +493,7 @@
         context.drawImage(maskCanvas, 0, 0);
         context.save();
 
-    }
+    };
 
     /*
     Removes red markers, assumes the image is properly oriented 
@@ -679,6 +587,32 @@
             console.log(rgbToHsl(px.r, px.g, px.b));
         }
     }
+
+    function getMousePos(canvas, evt) {
+        var rect = canvas.getBoundingClientRect();
+        var mouseX = evt.clientX - rect.left;
+        var mouseY = evt.clientY - rect.top;
+        var p = context.getImageData(mouseX, mouseY, 1, 1).data;
+        hsl = rgbToHsl(p[0],p[1],p[2]);
+        return {
+            x: mouseX,
+            y: mouseY,
+            r: p[0],
+            g: p[1],
+            b: p[2],
+            h: hsl.h * 360,
+            s: hsl.s,
+            l: hsl.l
+        };
+    }
+
+    canvas.addEventListener('mousemove', function(evt) {
+        var mousePos = getMousePos(canvas, evt);
+        var message = 'Mouse position: ' + mousePos.x + ',' + mousePos.y +
+                "  :  Color: " + mousePos.r+ ',' +mousePos.g+ ',' +mousePos.b+
+                "  :  HSL: "+mousePos.h.toFixed(2)+ ',' +mousePos.s.toFixed(2)+ ',' +mousePos.l.toFixed(2);
+        $("span").text(message);
+    }, false);
 
 </script>
 </body>
