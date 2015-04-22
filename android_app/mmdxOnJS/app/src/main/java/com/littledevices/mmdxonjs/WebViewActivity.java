@@ -35,7 +35,7 @@ public class WebViewActivity extends Activity {
 
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
-            if(Uri.parse(url).getHost().endsWith("www/index.html")) {
+            if(Uri.parse(url).getHost().endsWith("www/main.html")) {
                 // This is our web site, so do not override; let my WebView load the page
                 return false;
             }
@@ -67,7 +67,7 @@ public class WebViewActivity extends Activity {
         webSettings.setJavaScriptEnabled(true);
 
         mWebView.setWebViewClient(new MyWebViewClient());
-        mWebView.loadUrl("file:///android_asset/www/index.html");
+        mWebView.loadUrl("file:///android_asset/www/main.html");
 
 
     }

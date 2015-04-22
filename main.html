@@ -96,7 +96,7 @@
     var mmdx_image_tilted_left2 = getTestImageRotatedLeft2();
 
     //Actual image we are using
-    var mmdx_image = mmdx_image_tilted_right;
+    var mmdx_image = mmdx_image_tilted_left;
 
 
     imageObj.src = mmdx_image;
@@ -111,6 +111,9 @@
         canvas.width = imageWidth;
         context.drawImage(imageObj,0, 0);
     };
+    function loadImage(image_base64){
+        imageObj.src = image_base64
+    }
 
 
     //Register color tracking.js uses to identify markers
