@@ -2,20 +2,34 @@
 <html>
 <head>
     <!-- tracking.js -->
-    <script type="text/javascript" src="C:\Users\Thomas\Desktop\code\mmdxjs\src\tracking.js"></script>
+    <script type="text/javascript" src="resources/tracking.js"></script>
+
 
     <!-- functions to get test images in base 64-->
+    <script type="text/javascript" src="resources/jquery.js"></script>
     <script type="text/javascript" src="getImage64.js"></script>
 
     <script type="text/javascript" src="utils.js"></script>
     <script type="text/javascript" src="helpers.js"></script>
     <script type="text/javascript" src="data_structures.js"></script>
-    <script type="text/javascript" src="jquery.js"></script>
 
     <script type="text/javascript" src="cornerdetect.js"></script>
 
+    <!-- Adding Google API for Geolocation-->
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script>
+
+    <!-- Adding some style for the map component -->
+    <style>
+      #map-canvas {
+        height: 500px;
+        width:500px;
+        margin: 10px;
+        padding: 0px
+      }
+    </style>
+
 </head>
-<body>
+<body onload="DisplayRandomMap()">
 <div id = "container">
     <canvas id="canvas"></canvas>
     <p> <span></span>.</p>
@@ -25,12 +39,13 @@
     <button type="button" onclick = "getRuntime(rotate)"> Rotate </button>
     <button type="button" onclick = "getRuntime(removeMarkers)"> Remove markers </button>
     <button type="button" onclick = "getRuntime(getBlackBoxes)"> Find Black Boxes </button>
+    <button type="button" onclick = "getRuntime(LocateMe)"> Find Location </button>
 
     <p> Test Functions</p>
     <button type="button" onclick = "getRuntime(oldRetectRectangle)"> Old Detect rectange </button>
     <button type="button" onclick = "getRuntime(colorRedBoxHSL)"> HSL Color Red Box</button>
     <button type="button" onclick = "getRuntime(colorRedBoxRGB)"> RGB Color Red Box</button>
-
+    <div id="map-canvas"></div>
 
 </div>
 <script>
@@ -40,7 +55,24 @@
     // var mmdx_image_normal = "https://dl.dropboxusercontent.com/s/qlf5rw12j6jz6mn/25c.png";
     // var mmdx_image_tilted_left = "https://dl.dropboxusercontent.com/s/qma3hkf1q3iuaim/Mmdx_tilted_left.jpg";
     // var mmdx_image_tilted_right = "https://dl.dropboxusercontent.com/s/t0819dq8xu1o4hh/mmdx_tilted.jpg?dl=0";
+    
+    //********************************** GEOLOCATION STUFFS **********************************
+    var mapOptions = {
+        zoom: 2
+      };
+    var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
 
+    var DisplayRandomMap = function(){
+        var options = {
+            map: map,
+            position: new google.maps.LatLng(60, 105),
+            content: "Map Initialized"
+          };
+
+        var infowindow = new google.maps.InfoWindow(options);
+        map.setCenter(options.position);
+    }
+    //********************************** END GEOLOCATION STUFFS **********************************
 
     var canvas = document.getElementById('canvas');
     var context = canvas.getContext('2d');
@@ -49,7 +81,7 @@
     var imageData, pixels;
 
     //values for identifying what is red
-    var redMax = 255; //need to check this values again (display dependancy)!!!
+    var redMax = 255; //need to check this values again (display dependency)!!!
     var redMin = 180;
     var blueMax = 85;
     var greenMax = 85;
@@ -65,7 +97,7 @@
     var mmdx_image_tilted_left2 = getTestImageRotatedLeft2();
 
     //Actual image we are using
-    var mmdx_image = mmdx_image_tilted_right;
+    var mmdx_image = mmdx_image_tilted_left;
 
 
     imageObj.src = mmdx_image;
@@ -80,6 +112,9 @@
         canvas.width = imageWidth;
         context.drawImage(imageObj,0, 0);
     };
+    function loadImage(image_base64){
+        imageObj.src = image_base64
+    }
 
 
     //Register color tracking.js uses to identify markers
@@ -613,6 +648,57 @@
                 "  :  HSL: "+mousePos.h.toFixed(2)+ ',' +mousePos.s.toFixed(2)+ ',' +mousePos.l.toFixed(2);
         $("span").text(message);
     }, false);
+
+
+    //handling geolocation here
+    //current version only works on the click of a button, therefore, we have a button up there "Locate Me"
+
+    function LocateMe() {
+        console.log("Running Locate Me!");
+
+      // Try HTML5 geolocation
+      if(navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          var pos = new google.maps.LatLng(position.coords.latitude,
+                                           position.coords.longitude);
+
+          var infowindow = new google.maps.InfoWindow({
+            map: map,
+            position: pos,
+            content: 'Location found using HTML5.'
+          });
+
+          var mylocation = {lat: position.coords.latitude, lng:position.coords.longitude};
+          console.log("This is my Location");
+          console.log(mylocation);
+
+          map.setCenter(pos);
+        }, function() {
+          handleGeolocationFailure(true);
+        });
+      } else {
+        // Browser doesn't support Geolocation
+        handleGeolocationFailure(false);
+      }
+    }
+
+    //this function handles the case when geolocation cannot be found, then it centers the map component at a random location
+    function handleGeolocationFailure(errorFlag) {
+      if (errorFlag) {
+        var content = 'Error: The Geolocation service failed.';
+      } else {
+        var content = 'Error: Your browser doesn\'t support geolocation.';
+      }
+
+      var options = {
+        map: map,
+        position: new google.maps.LatLng(60, 105),
+        content: content
+      };
+
+      var infowindow = new google.maps.InfoWindow(options);
+      map.setCenter(options.position);
+    }
 
 </script>
 </body>
