@@ -89,8 +89,8 @@ public class WebViewActivity extends Activity {
         webSettings.setJavaScriptEnabled(true);
         mWebView.setWebViewClient(new MyWebViewClient());
         //geolocation start
-        mWebView.getSettings().setGeolocationEnabled(true); //enabling zoom -s
-        mWebView.getSettings().setBuiltInZoomControls(true); // enabling geolocation -s
+        mWebView.getSettings().setGeolocationEnabled(true);  // enabling geolocation -s
+        mWebView.getSettings().setBuiltInZoomControls(true); // enabling geolocation -s //enabling zoom -s
 
         mWebView.setWebChromeClient(new GeoWebChromeClient()); //setting chrome client above
         //geolocation end
