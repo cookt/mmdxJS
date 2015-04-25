@@ -14,6 +14,10 @@ import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+//for geolocation - start
+import android.webkit.GeolocationPermissions;
+import android.webkit.WebChromeClient;
+//for geolocation - end
 
 import java.io.ByteArrayOutputStream;
 
@@ -46,6 +50,23 @@ public class WebViewActivity extends Activity {
         }
     }
 
+    //*********************START*************************
+    // ADDING GEOLOCATION SUPPORT, automatically grant viewing permissions -S
+     /**
+     * WebChromeClient subclass handles UI-related calls
+     * Note: think chrome as in decoration, not the Chrome browser
+     */
+    public class GeoWebChromeClient extends WebChromeClient {
+        @Override
+        public void onGeolocationPermissionsShowPrompt(String origin,
+                GeolocationPermissions.Callback callback) {
+            // Always grant permission since the app itself requires location
+            // permission and the user has therefore already granted it
+            callback.invoke(origin, true, false);
+        }
+    }
+    //*********************END*************************
+
     // Pass picture path to html file
     @Override
     protected void onCreate(Bundle savedInstanceState){
@@ -65,8 +86,13 @@ public class WebViewActivity extends Activity {
         mWebView = (WebView) findViewById(R.id.webview);
         WebSettings webSettings = mWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
-
         mWebView.setWebViewClient(new MyWebViewClient());
+        //geolocation start
+        mWebView.getSettings().setGeolocationEnabled(true); //enabling zoom -s
+        mWebView.getSettings().setBuiltInZoomControls(true); // enabling geolocation -s
+  
+        mWebView.setWebChromeClient(new GeoWebChromeClient()); //setting chrome client above
+        //geolocation end
         mWebView.loadUrl("file:///android_asset/www/main.html");
 
 
