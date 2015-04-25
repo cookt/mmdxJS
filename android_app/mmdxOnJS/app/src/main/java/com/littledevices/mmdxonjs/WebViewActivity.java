@@ -84,13 +84,14 @@ public class WebViewActivity extends Activity {
         image_base64 = "data:image/jpeg;base64,"+Base64.encodeToString(b, Base64.DEFAULT);
 
         mWebView = (WebView) findViewById(R.id.webview);
+
         WebSettings webSettings = mWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         mWebView.setWebViewClient(new MyWebViewClient());
         //geolocation start
         mWebView.getSettings().setGeolocationEnabled(true); //enabling zoom -s
         mWebView.getSettings().setBuiltInZoomControls(true); // enabling geolocation -s
-  
+
         mWebView.setWebChromeClient(new GeoWebChromeClient()); //setting chrome client above
         //geolocation end
         mWebView.loadUrl("file:///android_asset/www/main.html");
