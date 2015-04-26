@@ -665,29 +665,37 @@
       // Try HTML5 geolocation
       if(navigator.geolocation) {
         console.log("NAVIGATOR OK");
+        console.log(navigator.geolocation.getCurrentPosition);
         navigator.geolocation.getCurrentPosition(function(position) {
-          var pos = new google.maps.LatLng(position.coords.latitude,
+            console.log("POS Running");
+            var pos = new google.maps.LatLng(position.coords.latitude,
                                            position.coords.longitude);
+            console.log("INFO-WINDOW Running");
+            var infowindow = new google.maps.InfoWindow({
+                map: map,
+                position: pos,
+                content: 'Location found using HTML5.'
+            });
 
-          var infowindow = new google.maps.InfoWindow({
-            map: map,
-            position: pos,
-            content: 'Location found using HTML5.'
-          });
-          var mylocation = {lat: position.coords.latitude, lng:position.coords.longitude};
-          console.log("This is my Location");
-          console.log(mylocation.lat);
-          console.log(mylocation.lng);
+            console.log("myLOCATION Running");
+            var mylocation = {lat: position.coords.latitude, lng:position.coords.longitude};
+            console.log("This is my Location");
+            console.log(mylocation.lat);
+            console.log(mylocation.lng);
 
-          map.setCenter(pos);
-        }, function() {
-          handleGeolocationFailure(true);
-        });
-      } else {
-        console.log("NAVIGATOR NOT OK");
-        // Browser doesn't support Geolocation
-        handleGeolocationFailure(false);
-      }
+            map.setCenter(pos);
+
+            }, function() {
+                console.log("HandleGeolocFailure within navigator Running");
+                handleGeolocationFailure(true);
+                }
+            );
+
+        } else {
+            console.log("NAVIGATOR NOT OK");
+            // Browser doesn't support Geolocation
+            handleGeolocationFailure(false);
+        }
     }
 
     //this function handles the case when geolocation cannot be found, then it centers the map component at a random location
