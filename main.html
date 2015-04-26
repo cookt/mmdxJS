@@ -681,7 +681,7 @@
             var mylocation = {lat: position.coords.latitude, lng:position.coords.longitude};
 
             // call to function to send to DB
-            var Results = myLocation;
+            var Results = mylocation;
             Results.diagnosis = "Ebola";
             sendStuffToDB(Results);
 
@@ -739,9 +739,11 @@
     function sendStuffToDB(results){
         //results contains: lng, lat, diagnosis
         console.log("calling the diagnosis function");
+        console.log(results.lat);
+        console.log(results.lng);
+        console.log(results.diagnosis);
 
     }
-
 
 
 
