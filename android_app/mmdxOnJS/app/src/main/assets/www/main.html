@@ -756,6 +756,9 @@
         console.log(results.lat);
         console.log(results.lng);
         console.log(results.diagnosis);
+        var url = "http://localhost:5000/results?"; //lat=10.1&lng=10&diagnosis=Ebola;
+        //sends dummy data, not yet connected to website
+        location.href = url+ "lat="+results.lat+"&lng="+results.lng+"&diagnosis="+results.diagnosis;
 
     }
 
