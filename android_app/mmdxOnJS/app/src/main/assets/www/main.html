@@ -672,8 +672,8 @@
 
     //handling geolocation here
     //current version only works on the click of a button, therefore, we have a button up there "Locate Me"
-
-    function LocateMe() {
+    //Later: pass in diagnosis as argument to LocateMe <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<IMPORTANT
+    function LocateMe() { // works on LG but not on OPO
         console.log("Running Locate Me!");
 
       // Try HTML5 geolocation
@@ -693,6 +693,14 @@
 
             console.log("myLOCATION Running");
             var mylocation = {lat: position.coords.latitude, lng:position.coords.longitude};
+
+            // call to function to send to DB
+            var Results = myLocation;
+            Results.diagnosis = "Ebola";
+            sendStuffToDB(Results);
+
+
+            //END this call here
             console.log("This is my Location");
             console.log(mylocation.lat);
             console.log(mylocation.lng);
@@ -735,6 +743,21 @@
       var infowindow = new google.maps.InfoWindow(options);
       map.setCenter(options.position);
     }
+
+
+    // Flow works as follows: detect Rectangle, Rotate, Crop, removeMarkers, FindBlackBoxes
+    //                        Analyse/ Diagnose (To be implemented), Find Location 
+    //                        (Find Location then calls sendStuffToDB);
+    // Automatically do image processing, Diagnosis and location finding when called
+    // this will be used to post stuff to the DB as well
+    function sendStuffToDB(results){
+        //results contains: lng, lat, diagnosis
+        console.log("calling the diagnosis function");
+
+    }
+
+
+
 
 </script>
 </body>
