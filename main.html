@@ -207,21 +207,36 @@
             secondBox = [boxes[2],boxes[3]];
             thirdBox = [boxes[4],boxes[5]];
             fourthBox = [boxes[6],boxes[7]];
+            console.log("GET HEIGHTS");
+            getHeights(firstBox);
         }
 
         getBoxEdges();
 
         function getHeights(box){
-            var pixelColumnMiddle  = context.getImageData(box[0],searchHeight,1,canvas.height-searchHeight);
+            var pixelColumnMiddle  = context.getImageData(box[0]+6,0,1,canvas.height/2);
+            context.fillStyle = "blue";
+            context.fillRect(box[0]+6, 0, 1, canvas.height/2);
             var midData = pixelColumnMiddle.data;
             for(var y = 0; y < midData.length; y+=4){
-                if(isBlackRGB()){
-
+                if(isBlackRGB(midData[0],midData[1],midData[2])){
+                    context.fillStyle = "orange";
+                    context.fillRect(box[0]+6, y, 10, 5);
+                    if(checkedForward(y, midData)){
+                        box.push(y);
+                        while(isBlackRGB(midData[0],midData[1],midData[2])){
+                            context.fillStyle = "purple";
+                            context.fillRect(box[0]+6, y, 5, 5);
+                            y += 4;
+                        }
+                        box.push(y);
+                    }
                 }
             }
+            console.log("BOX HEIGHT: "+ box);
         }
 
-        console.log("BOXES: " + " FIRST BOX: " + firstBox + " SECOND BOX: " + secondBox + " THIRD BOX: " + thirdBox + " FOURTH BOX: " + fourthBox);
+        //console.log("BOXES: " + " FIRST BOX: " + firstBox + " SECOND BOX: " + secondBox + " THIRD BOX: " + thirdBox + " FOURTH BOX: " + fourthBox);
         drawLanes(firstBox);
         drawLanes(secondBox);
         drawLanes(thirdBox);
