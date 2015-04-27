@@ -16,12 +16,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import com.parse.Parse;
-import com.parse.ParseObject;
-
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+
+import java.io.ByteArrayOutputStream;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -42,9 +42,9 @@ public class MainActivity extends ActionBarActivity {
         Parse.initialize(this, "z2v1UxBUDcOeOpP76S0kaJ0cMlPPfkB9qXUC2hsg", "OpVd1539IO5BB7WhXW47qSIjvlBbFJvTdz4WcNvs");
 
         //testing parse
-//        ParseObject testObject = new ParseObject("TestObject");
-//        testObject.put("foo", "bar");
-//        testObject.saveInBackground();
+        // ParseObject testObject = new ParseObject("TestObject");
+        // testObject.put("foo", "bar");
+        // testObject.saveInBackground();
 
     }
 
@@ -112,4 +112,5 @@ public class MainActivity extends ActionBarActivity {
         }
 
     }
+
 }
