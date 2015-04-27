@@ -70,7 +70,7 @@
 
         var infowindow = new google.maps.InfoWindow(options);
         map.setCenter(options.position);
-    }
+    };
     //********************************** END GEOLOCATION STUFFS **********************************
 
     var canvas = document.getElementById('canvas');
@@ -160,18 +160,15 @@
             context.stroke();
         }
         return corners;
-    }
+    };
 
     function getBlackBoxes(){
         //This is just for optimization might get rid of it if it causes problems
         var searchWidth = canvas.width;
-        var searchHeight = canvas.height/2;
+        var searchHeight = canvas.height * .20;
         //coordinates of the black boxes
-        var boxes = [];
-        var firstBox = [];
-        var secondBox = [];
-        var thirdBox = [];
-        var fourthBox = [];
+        var rawBoxData = [];
+        var boxArray = [];
         var pixelRow = context.getImageData(0, 0, searchWidth, 1);
         var data = pixelRow.data;
 
@@ -182,10 +179,9 @@
         function getMiddleYOfBoxes() {
             var startColumn = 0;
             var horizontalMiddleOfBox = 0;
-            while (!foundFirstBoxEdge(data) && horizontalMiddleOfBox < 50) {
+            while (!foundFirstBoxEdge(data) && horizontalMiddleOfBox < searchHeight) {
                 pixelRow = context.getImageData(startColumn, horizontalMiddleOfBox, searchWidth, 1);
                 data = pixelRow.data;
-                //console.log(horizontalMiddleOfBox);
                 horizontalMiddleOfBox++;
             }
             horizontalMiddleOfBox += canvas.height * .04;
@@ -197,50 +193,20 @@
          */
         function getBoxEdges(){
             var startColumn = 0;
-            //alert("here");
             var horizontalMiddleOfBox = getMiddleYOfBoxes();
-            //alert("here2");
             var pixelRowMiddle = context.getImageData(startColumn, horizontalMiddleOfBox, searchWidth, 1);
             var midData = pixelRowMiddle.data;
-            findBlackBoxEdgesFromMiddle(startColumn,boxes,midData,horizontalMiddleOfBox);
-            firstBox = [boxes[0],boxes[1]];
-            secondBox = [boxes[2],boxes[3]];
-            thirdBox = [boxes[4],boxes[5]];
-            fourthBox = [boxes[6],boxes[7]];
-            console.log("GET HEIGHTS");
-            getHeights(firstBox);
-        }
-
-        getBoxEdges();
-
-        function getHeights(box){
-            var pixelColumnMiddle  = context.getImageData(box[0]+6,0,1,canvas.height/2);
-            context.fillStyle = "blue";
-            context.fillRect(box[0]+6, 0, 1, canvas.height/2);
-            var midData = pixelColumnMiddle.data;
-            for(var y = 0; y < midData.length; y+=4){
-                if(isBlackRGB(midData[0],midData[1],midData[2])){
-                    context.fillStyle = "orange";
-                    context.fillRect(box[0]+6, y, 10, 5);
-                    if(checkedForward(y, midData)){
-                        box.push(y);
-                        while(isBlackRGB(midData[0],midData[1],midData[2])){
-                            context.fillStyle = "purple";
-                            context.fillRect(box[0]+6, y, 5, 5);
-                            y += 4;
-                        }
-                        box.push(y);
-                    }
-                }
+            findBlackBoxEdgesFromMiddle(startColumn,rawBoxData,midData);
+            for(var boxData = 0; boxData < rawBoxData.length; boxData += 2){
+                boxArray.push([rawBoxData[boxData],rawBoxData[boxData+1]])
             }
-            console.log("BOX HEIGHT: "+ box);
+            for(var box = 0; box<boxArray.length; box++){
+                getHeights(boxArray[box]);
+                removeExtraYCoords(boxArray[box]);
+                drawLanes(boxArray[box]);
+            }
         }
-
-        //console.log("BOXES: " + " FIRST BOX: " + firstBox + " SECOND BOX: " + secondBox + " THIRD BOX: " + thirdBox + " FOURTH BOX: " + fourthBox);
-        drawLanes(firstBox);
-        drawLanes(secondBox);
-        drawLanes(thirdBox);
-        drawLanes(fourthBox);
+        getBoxEdges();
     }
 
 
@@ -278,7 +244,7 @@
         }
 
         return redCorners;
-    }
+    };
     /**
     
     DETECTION:
@@ -627,7 +593,7 @@
         */
 
 
-    }
+    };
 
 
     document.onmousedown = printCoordsAndRGB;
@@ -757,11 +723,7 @@
         console.log(results.lat);
         console.log(results.lng);
         console.log(results.diagnosis);
-
     }
-
-
-
 </script>
 </body>
 </html>  
