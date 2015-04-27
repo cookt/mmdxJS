@@ -15,6 +15,8 @@
 
     <script type="text/javascript" src="cornerdetect.js"></script>
 
+    <script type="text/javascript" src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
     <!-- Adding Google API for Geolocation-->
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script>
 
@@ -40,7 +42,7 @@
     <button type="button" onclick = "getRuntime(removeMarkers)"> Remove markers </button>
     <button type="button" onclick = "getRuntime(getBlackBoxes)"> Find Black Boxes </button>
     <button type="button" onclick = "getRuntime(LocateMe)"> Find Location </button>
-
+    <button type="button" onclick = "getRuntime(processLane)">Process Lane</button>
     <p> Test Functions</p>
     <button type="button" onclick = "getRuntime(oldRetectRectangle)"> Old Detect rectange </button>
     <button type="button" onclick = "getRuntime(colorRedBoxHSL)"> HSL Color Red Box</button>
@@ -772,6 +774,18 @@
             console.log("okay i got into the local SetData method");
             Android.setData(data);
             window.alert("Data sent to Native Android");
+    }
+
+    //
+    var processLane=function(start_x,end_x,start_y,end_y,samplingRate){
+        var signal={};
+        signal.samplingRate=samplingRate;
+        signal.start_x=start_x;
+        signal.start_y=start_y;
+        signal.end_x=end_x;
+        signal.end_y=end_y;
+
+        rgbVector
     }
 
 </script>
