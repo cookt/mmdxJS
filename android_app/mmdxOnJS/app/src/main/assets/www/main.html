@@ -759,9 +759,18 @@
         var url = "http://localhost:5000/results?"; //lat=10.1&lng=10&diagnosis=Ebola;
         //sends dummy data, not yet connected to website
         //location.href = url+ "lat="+results.lat+"&lng="+results.lng+"&diagnosis="+results.diagnosis;
+        console.log("calling Set Data");
+        setData('['+ results.lat+","+ results.lng+']');
 
     }
 
+
+    //testing sending stuff to native android
+    var setData = function(data) {
+            console.log("okay i got into the local SetData method");
+        	Android.setData(data);
+        	window.alert("Data sent to Native Android");
+    }
 
 </script>
 </body>
