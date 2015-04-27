@@ -261,6 +261,16 @@ function findBlackBoxEdgesFromMiddle(startX,box,data, y) {
     return lastX/4;
 }
 
+function checkedForward(start,data){
+    var checkedFurther = true;
+    for(var verify = start; verify < start+40; verify+=4) {
+        if (!isBlackRGB(data[verify],data[verify+1],data[verify+2])) {
+            checkedFurther = false;
+        }
+    }
+    return checkedFurther;
+}
+
 /**
  * Draws lane profiles for searching
  * @param box

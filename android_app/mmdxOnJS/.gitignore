@@ -1,6 +1,8 @@
 .gradle
 /local.properties
-/.idea/workspace.xml
-/.idea/libraries
+/.idea
 .DS_Store
 /build
+/android_app/mmdxOnJS/app/app.iml
+/android_app/mmdxOnJS/mmdxOnJS.iml
+

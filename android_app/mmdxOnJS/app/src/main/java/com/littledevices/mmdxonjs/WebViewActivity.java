@@ -14,8 +14,25 @@ import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+//for geolocation - start
+import android.webkit.GeolocationPermissions;
+import android.webkit.WebChromeClient;
+//for geolocation - end
+
+import android.webkit.JavascriptInterface;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.*;
+import android.content.Context;
+import android.widget.Toast;
+
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 
 public class WebViewActivity extends Activity {
@@ -45,6 +62,76 @@ public class WebViewActivity extends Activity {
             return true;
         }
     }
+    // Adding stuff to enable sending data - S
+    public class WebAppInterface {
+        Context mContext;
+
+        /** Instantiate the interface and set the context */
+        WebAppInterface(Context c) {
+            mContext = c;
+        }
+
+        /** Show a toast from the web page */
+        @JavascriptInterface
+        public void showToast(String toast) {
+            Toast.makeText(mContext, toast, Toast.LENGTH_SHORT).show();
+        }
+
+        /** Allow the JavaScript to pass some data in to us. */
+        @JavascriptInterface
+        public void setData(String newData) throws JSONException {
+            Log.d("checking if called", "MainActivity.setData()");
+            JSONArray streamer = new JSONArray(newData);
+            double[] data = new double[streamer.length()];
+            for (int i = 0; i < streamer.length(); i++) {
+                Double n = streamer.getDouble(i);
+                data[i] = n;
+            }
+
+            //handle sending stuff over to the database
+            this.postData(data);
+        }
+
+        public void postData(double[] data) {
+            // Create a new HttpClient and Post Header
+            HttpClient httpclient = new DefaultHttpClient();
+            String formattedData = "lat="+ data[0]+ "&lng="+ data[1] +"&diagnosis=Dengue";
+            String toPost = "http://mmdx.parseapp.com/send_result?"+ formattedData;
+            HttpPost httppost = new HttpPost(toPost);
+
+            try {
+
+                // Execute HTTP Post Request
+                HttpResponse response = httpclient.execute(httppost);
+                
+            } catch (ClientProtocolException e) {
+                // TODO Auto-generated catch block
+                Log.i("DanaSucks", "client Protocol exception");
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                Log.i("DanaSucks", "IOException");
+            }
+        } 
+
+
+    }
+
+    //*********************START*************************
+    // ADDING GEOLOCATION SUPPORT, automatically grant viewing permissions -S
+     /**
+     * WebChromeClient subclass handles UI-related calls
+     * Note: think chrome as in decoration, not the Chrome browser
+     */
+    public class GeoWebChromeClient extends WebChromeClient {
+        @Override
+        public void onGeolocationPermissionsShowPrompt(String origin,
+                GeolocationPermissions.Callback callback) {
+            // Always grant permission since the app itself requires location
+            // permission and the user has therefore already granted it
+            callback.invoke(origin, true, false);
+        }
+    }
+    //*********************END*************************
 
     // Pass picture path to html file
     @Override
@@ -63,10 +150,20 @@ public class WebViewActivity extends Activity {
         image_base64 = "data:image/jpeg;base64,"+Base64.encodeToString(b, Base64.DEFAULT);
 
         mWebView = (WebView) findViewById(R.id.webview);
+
         WebSettings webSettings = mWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
-
         mWebView.setWebViewClient(new MyWebViewClient());
+        //geolocation start
+        mWebView.getSettings().setGeolocationEnabled(true);  // enabling geolocation -s
+        mWebView.getSettings().setBuiltInZoomControls(true); //enabling zoom -s
+        mWebView.getSettings().setAppCacheEnabled(true);
+        mWebView.getSettings().setDatabaseEnabled(true);
+        mWebView.getSettings().setDomStorageEnabled(true);
+        mWebView.addJavascriptInterface(new WebAppInterface(this), "Android");
+
+        mWebView.setWebChromeClient(new GeoWebChromeClient()); //setting chrome client above
+        //geolocation end
         mWebView.loadUrl("file:///android_asset/www/main.html");
 
 
@@ -98,6 +195,8 @@ public class WebViewActivity extends Activity {
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
     }
+
+
 
 
 }

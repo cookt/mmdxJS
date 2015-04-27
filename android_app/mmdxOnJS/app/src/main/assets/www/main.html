@@ -130,6 +130,12 @@
     //};
 
 
+//*****************************************************************************************************
+//*****************************************************************************************************
+//*********************************** YOU CAN COPY CODE AS FROM HERE FROM THE OUTER ONE****************
+//*****************************************************************************************************
+//*****************************************************************************************************
+
 
     //Register color tracking.js uses to identify markers
     tracking.ColorTracker.registerColor('marker', function(r, g, b) {
@@ -666,52 +672,104 @@
 
     //handling geolocation here
     //current version only works on the click of a button, therefore, we have a button up there "Locate Me"
-
-    function LocateMe() {
+    //Later: pass in diagnosis as argument to LocateMe <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<IMPORTANT
+    function LocateMe() { // works on LG but not on OPO
         console.log("Running Locate Me!");
 
       // Try HTML5 geolocation
       if(navigator.geolocation) {
+        console.log("NAVIGATOR OK");
+        //console.log(navigator.geolocation.getCurrentPosition);
         navigator.geolocation.getCurrentPosition(function(position) {
-          var pos = new google.maps.LatLng(position.coords.latitude,
+            console.log("POS Running");
+            var pos = new google.maps.LatLng(position.coords.latitude,
                                            position.coords.longitude);
+            console.log("INFO-WINDOW Running");
+            var infowindow = new google.maps.InfoWindow({
+                map: map,
+                position: pos,
+                content: 'Location found using HTML5.'
+            });
 
-          var infowindow = new google.maps.InfoWindow({
-            map: map,
-            position: pos,
-            content: 'Location found using HTML5.'
+            console.log("myLOCATION Running");
+            var mylocation = {lat: position.coords.latitude, lng:position.coords.longitude};
+
+            // call to function to send to DB
+            var Results = mylocation;
+            Results.diagnosis = "Ebola";
+            sendStuffToDB(Results);
+
+
+            //END this call here
+            console.log("This is my Location");
+            console.log(mylocation.lat);
+            console.log(mylocation.lng);
+
+            map.setCenter(pos);
+
+            }, function() {
+                console.log("HandleGeolocFailure within navigator Running");
+                handleGeolocationFailure(true);
+                },
+
+            { timeout:60000,
+              enableHighAccuracy:false
           });
 
-          var mylocation = {lat: position.coords.latitude, lng:position.coords.longitude};
-          console.log("This is my Location");
-          console.log(mylocation);
-
-          map.setCenter(pos);
-        }, function() {
-          handleGeolocationFailure(true);
-        });
-      } else {
-        // Browser doesn't support Geolocation
-        handleGeolocationFailure(false);
-      }
+        } else {
+            console.log("NAVIGATOR NOT OK");
+            // Browser doesn't support Geolocation
+            handleGeolocationFailure(false);
+        }
     }
 
     //this function handles the case when geolocation cannot be found, then it centers the map component at a random location
     function handleGeolocationFailure(errorFlag) {
+        console.log("Running handleGeolocationFailure");
       if (errorFlag) {
+        console.log("Error: The Geolocation service failed");
         var content = 'Error: The Geolocation service failed.';
       } else {
+        console.log("Error: Browser does not support geolocation");
         var content = 'Error: Your browser doesn\'t support geolocation.';
       }
 
       var options = {
         map: map,
-        position: new google.maps.LatLng(60, 105),
+        position: new google.maps.LatLng(100, 105),
         content: content
       };
 
       var infowindow = new google.maps.InfoWindow(options);
       map.setCenter(options.position);
+    }
+
+
+    // Flow works as follows: detect Rectangle, Rotate, Crop, removeMarkers, FindBlackBoxes
+    //                        Analyse/ Diagnose (To be implemented), Find Location 
+    //                        (Find Location then calls sendStuffToDB);
+    // Automatically do image processing, Diagnosis and location finding when called
+    // this will be used to post stuff to the DB as well
+    function sendStuffToDB(results){
+        //results contains: lng, lat, diagnosis
+        console.log("calling the diagnosis function");
+        console.log(results.lat);
+        console.log(results.lng);
+        console.log(results.diagnosis);
+        var url = "http://localhost:5000/results?"; //lat=10.1&lng=10&diagnosis=Ebola;
+        //sends dummy data, not yet connected to website
+        //location.href = url+ "lat="+results.lat+"&lng="+results.lng+"&diagnosis="+results.diagnosis;
+        console.log("calling Set Data");
+        setData('['+ results.lat+","+ results.lng+']');
+
+    }
+
+
+    //testing sending stuff to native android
+    var setData = function(data) {
+            console.log("okay i got into the local SetData method");
+        	Android.setData(data);
+        	window.alert("Data sent to Native Android");
     }
 
 </script>
