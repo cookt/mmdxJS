@@ -42,7 +42,7 @@
     <button type="button" onclick = "getRuntime(removeMarkers)"> Remove markers </button>
     <button type="button" onclick = "getRuntime(getBlackBoxes)"> Find Black Boxes </button>
     <button type="button" onclick = "getRuntime(LocateMe)"> Find Location </button>
-    <button type="button" onclick = "getRuntime(processLane)">Process Lane</button>
+    <button type="button" onclick = "getRuntime(processLane1)">Process Lane</button>
     <p> Test Functions</p>
     <button type="button" onclick = "getRuntime(oldRetectRectangle)"> Old Detect rectange </button>
     <button type="button" onclick = "getRuntime(colorRedBoxHSL)"> HSL Color Red Box</button>
@@ -73,7 +73,7 @@
 
         var infowindow = new google.maps.InfoWindow(options);
         map.setCenter(options.position);
-    }
+    };
     //********************************** END GEOLOCATION STUFFS **********************************
 
     var canvas = document.getElementById('canvas');
@@ -119,6 +119,8 @@
     }
 
 
+    //the boxes that mark the lanes 
+    var markerBoxes=[];
 //*****************************************************************************************************
 //*****************************************************************************************************
 //*********************************** YOU CAN COPY CODE AS FROM HERE INTO THE INNER ONE****************
@@ -163,18 +165,15 @@
             context.stroke();
         }
         return corners;
-    }
+    };
 
     function getBlackBoxes(){
         //This is just for optimization might get rid of it if it causes problems
         var searchWidth = canvas.width;
-        var searchHeight = canvas.height/2;
+        var searchHeight = canvas.height * .20;
         //coordinates of the black boxes
-        var boxes = [];
-        var firstBox = [];
-        var secondBox = [];
-        var thirdBox = [];
-        var fourthBox = [];
+        var rawBoxData = [];
+        var boxArray = [];
         var pixelRow = context.getImageData(0, 0, searchWidth, 1);
         var data = pixelRow.data;
 
@@ -185,10 +184,9 @@
         function getMiddleYOfBoxes() {
             var startColumn = 0;
             var horizontalMiddleOfBox = 0;
-            while (!foundFirstBoxEdge(data) && horizontalMiddleOfBox < 50) {
+            while (!foundFirstBoxEdge(data) && horizontalMiddleOfBox < searchHeight) {
                 pixelRow = context.getImageData(startColumn, horizontalMiddleOfBox, searchWidth, 1);
                 data = pixelRow.data;
-                //console.log(horizontalMiddleOfBox);
                 horizontalMiddleOfBox++;
             }
             horizontalMiddleOfBox += canvas.height * .04;
@@ -200,50 +198,21 @@
          */
         function getBoxEdges(){
             var startColumn = 0;
-            //alert("here");
             var horizontalMiddleOfBox = getMiddleYOfBoxes();
-            //alert("here2");
             var pixelRowMiddle = context.getImageData(startColumn, horizontalMiddleOfBox, searchWidth, 1);
             var midData = pixelRowMiddle.data;
-            findBlackBoxEdgesFromMiddle(startColumn,boxes,midData,horizontalMiddleOfBox);
-            firstBox = [boxes[0],boxes[1]];
-            secondBox = [boxes[2],boxes[3]];
-            thirdBox = [boxes[4],boxes[5]];
-            fourthBox = [boxes[6],boxes[7]];
-            console.log("GET HEIGHTS");
-            getHeights(firstBox);
-        }
-
-        getBoxEdges();
-
-        function getHeights(box){
-            var pixelColumnMiddle  = context.getImageData(box[0]+6,0,1,canvas.height/2);
-            context.fillStyle = "blue";
-            context.fillRect(box[0]+6, 0, 1, canvas.height/2);
-            var midData = pixelColumnMiddle.data;
-            for(var y = 0; y < midData.length; y+=4){
-                if(isBlackRGB(midData[0],midData[1],midData[2])){
-                    context.fillStyle = "orange";
-                    context.fillRect(box[0]+6, y, 10, 5);
-                    if(checkedForward(y, midData)){
-                        box.push(y);
-                        while(isBlackRGB(midData[0],midData[1],midData[2])){
-                            context.fillStyle = "purple";
-                            context.fillRect(box[0]+6, y, 5, 5);
-                            y += 4;
-                        }
-                        box.push(y);
-                    }
-                }
+            findBlackBoxEdgesFromMiddle(startColumn,rawBoxData,midData);
+            for(var boxData = 0; boxData < rawBoxData.length; boxData += 2){
+                boxArray.push([rawBoxData[boxData],rawBoxData[boxData+1]])
             }
-            console.log("BOX HEIGHT: "+ box);
+            for(var box = 0; box<boxArray.length; box++){
+                getHeights(boxArray[box]);
+                removeExtraYCoords(boxArray[box]);
+                drawLanes(boxArray[box]);
+            }
+            markerBoxes=boxArray;
         }
-
-        //console.log("BOXES: " + " FIRST BOX: " + firstBox + " SECOND BOX: " + secondBox + " THIRD BOX: " + thirdBox + " FOURTH BOX: " + fourthBox);
-        drawLanes(firstBox);
-        drawLanes(secondBox);
-        drawLanes(thirdBox);
-        drawLanes(fourthBox);
+        getBoxEdges();
     }
 
 
@@ -281,19 +250,19 @@
         }
 
         return redCorners;
-    }
+    };
     /**
-    
+
     DETECTION:
 
     Uses tracking.js to find markers (color details are specified above)
-    Finds a rectangle around a detected object 
+    Finds a rectangle around a detected object
          (tracker returns "rect" object {x: value, y:value, height:value, width:value, color:value})
     If not rotated, will draw the abovementioned rectange and use its corners
     If rotated, find the intersection of the actual rectange with the abovemention rectangle
     and assigns corners correctly
     */
-    
+
     var detect = function(){
 
         imageData = context.getImageData(0,0,imageWidth, imageHeight);
@@ -311,7 +280,7 @@
                 var h = rect.height;
                 //corners might change
                 var corners = [new Point(x,y),new Point(x+w, y+h), new Point(x+w,y), new Point(x, y+h)];
-                
+
 
                 var rotated = checkIfRotated();
                 markerRectangle = new Rectangle(corners, rotated);
@@ -386,12 +355,12 @@
         var w = tracked_rect.width;
         var h = tracked_rect.height;
         var c1, c2, c3, c4; //corners
-        
+
         //check possible combinations:
 
         var inc = -1;
 
-        // walk along the top rect edge (and lines right below), find the first points where 
+        // walk along the top rect edge (and lines right below), find the first points where
         // the detected rectange intersects the marker (first red point)
         while (!c1){
             inc++;
@@ -455,7 +424,7 @@
             var closest = findClosest(corners[i], cornersHarris, imageWidth*0.02);
             if (closest){
                 corners[i] = closest;
-            }     
+            }
 
         }
         markerRectangle.setCorners(corners);
@@ -493,7 +462,7 @@
         var c2 = markerRectangle.getCorners()[1];
         var c3 = markerRectangle.getCorners()[2];
         var c4 = markerRectangle.getCorners()[3];
-        
+
         //save image data so we can modify canvas
         var imageURL = canvas.toDataURL();
         var image = new Image();
@@ -504,7 +473,7 @@
         //find the center to rotate about
         var center = new Point(Math.round(tracked_rect.x+tracked_rect.width/2), Math.round(tracked_rect.y+tracked_rect.height/2));
         context.translate(1*center.x, 1*center.y);
-        
+
         //context.clearRect(0,0,canvas.width,canvas.height);
         context.save();
         context.rotate(angle.radians);
@@ -555,7 +524,7 @@
     };
 
     /*
-    Removes red markers, assumes the image is properly oriented 
+    Removes red markers, assumes the image is properly oriented
     */
     var removeMarkers = function(){
         var padding = 10;
@@ -630,7 +599,7 @@
         */
 
 
-    }
+    };
 
 
     document.onmousedown = printCoordsAndRGB;
@@ -750,7 +719,7 @@
 
 
    // Flow works as follows: detect Rectangle, Rotate, Crop, removeMarkers, FindBlackBoxes
-    //                        Analyse/ Diagnose (To be implemented), Find Location 
+    //                        Analyse/ Diagnose (To be implemented), Find Location
     //                        (Find Location then calls sendStuffToDB);
     // Automatically do image processing, Diagnosis and location finding when called
     // this will be used to post stuff to the DB as well
@@ -760,6 +729,7 @@
         console.log(results.lat);
         console.log(results.lng);
         console.log(results.diagnosis);
+
         var url = "http://localhost:5000/results?"; //lat=10.1&lng=10&diagnosis=Ebola;
         //sends dummy data, not yet connected to website
         //location.href = url+ "lat="+results.lat+"&lng="+results.lng+"&diagnosis="+results.diagnosis;
@@ -776,18 +746,55 @@
             window.alert("Data sent to Native Android");
     }
 
-    //
-    var processLane=function(start_x,end_x,start_y,end_y,samplingRate){
-        var signal={};
-        signal.samplingRate=samplingRate;
-        signal.start_x=start_x;
-        signal.start_y=start_y;
-        signal.end_x=end_x;
-        signal.end_y=end_y;
+    //Parameters:
+    //start_x: lane left line x
+    //start_y: top marker box bottom y
+    //end_x: lane right line x
+    //end_y: bottom marker box top y
+    //sampling rate: floating point number between (0.0,1.0) specifying what percentage
+    //of the lane will be processed
+    var processLane=function (start_x,end_x,start_y,end_y,samplingRate){
+            context.fillStyle="green";
+            pixels=context.getImageData(0,0,imageWidth,imageHeight).data;
 
-        rgbVector
+            var signal={};
+            signal.samplingRate=samplingRate;
+            signal.start_x=start_x;
+            signal.start_y=start_y;
+            signal.end_x=end_x;
+            signal.end_y=end_y;
+
+            signal.strip_length=Math.abs(end_y-start_y);
+            signal.strip_width=Math.abs(end_x-start_x);
+            signal.numberOfSamples=Math.ceil(signal.strip_length*samplingRate);
+            var increment=Math.floor(signal.strip_length/signal.numberOfSamples);
+
+
+            var rgbVector=[];
+            var index=0;
+
+            
+            for (var i=start_y; i < end_y; i+=increment){
+
+                for(var j=start_x; j < end_x; j++){
+                    
+                }
+
+                context.fillRect(start_x,i,signal.strip_width,1);
+            }
+
+            signal.rgbVector=rgbVector;
+            
+            return signal;
     }
+
+    function processLane1(){
+        var test=markerBoxes[0];
+        console.log("Box: "+test);
+        processLane(test[0],test[1],test[2],test[3],0.5);
+
+    };
 
 </script>
 </body>
-</html>    
+</html>
