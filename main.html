@@ -42,7 +42,8 @@
     <button type="button" onclick = "getRuntime(removeMarkers)"> Remove markers </button>
     <button type="button" onclick = "getRuntime(getBlackBoxes)"> Find Black Boxes </button>
     <button type="button" onclick = "getRuntime(LocateMe)"> Find Location </button>
-    <button type="button" onclick = "getRuntime(processLane1)">Process Lane</button>
+    <button type="button" onclick = "getRuntime(processAllLanes)">Process Lanes</button>
+    <button type="button" onclick= "getRuntime(doItAll)">do it all</button>
     <p> Test Functions</p>
     <button type="button" onclick = "getRuntime(oldRetectRectangle)"> Old Detect rectange </button>
     <button type="button" onclick = "getRuntime(colorRedBoxHSL)"> HSL Color Red Box</button>
@@ -788,11 +789,22 @@
             return signal;
     }
 
-    function processLane1(){
-        var test=markerBoxes[0];
-        console.log("Box: "+test);
-        processLane(test[0],test[1],test[2],test[3],0.5);
+    function processAllLanes(){
+        for(var i in markerBoxes){
+            var test=markerBoxes[i];
+            console.log("Box: "+test);
+            processLane(test[0],test[1],test[2],test[3],0.15);
+        }
 
+    };
+
+    function doItAll(){
+        detect();
+        crop();
+        rotate();
+        removeMarkers();
+        getBlackBoxes();
+        processAllLanes();
     };
 
 </script>
