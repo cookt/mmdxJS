@@ -95,7 +95,7 @@ public class WebViewActivity extends Activity {
         public void postData(double[] data) {
             // Create a new HttpClient and Post Header
             HttpClient httpclient = new DefaultHttpClient();
-            String formattedData = "lat="+ data[0]+ "&lng="+ data[1] +"&diagnosis=Dengue";
+            String formattedData = "lat="+ data[0]+ "&lng="+ data[1] +"&diagnosis=Ebola";
             String toPost = "http://mmdx.parseapp.com/send_result?"+ formattedData;
             HttpPost httppost = new HttpPost(toPost);
 
