@@ -15,7 +15,7 @@
 
     <script type="text/javascript" src="cornerdetect.js"></script>
 
-    <script type="text/javascript" src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="resources/d3.js" charset="utf-8"></script>
 
     <!-- Adding Google API for Geolocation-->
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script>
@@ -49,6 +49,9 @@
     <button type="button" onclick = "getRuntime(colorRedBoxHSL)"> HSL Color Red Box</button>
     <button type="button" onclick = "getRuntime(colorRedBoxRGB)"> RGB Color Red Box</button>
     <div id="map-canvas"></div>
+
+</div>
+<div id="graph">
 
 </div>
 <script>
@@ -754,6 +757,11 @@
     //end_y: bottom marker box top y
     //sampling rate: floating point number between (0.0,1.0) specifying what percentage
     //of the lane will be processed
+    //Return value: the signal object of one lane with the following properties
+    //  rgbVector: rgb average of each sampled band
+    //  start_x, end_x, start_y, end_y
+    //  strip_length, strip_width
+    //  samplingRate, numberOfSamples
     var processLane=function (start_x,end_x,start_y,end_y,samplingRate){
             context.fillStyle="green";
             pixels=context.getImageData(0,0,imageWidth,imageHeight).data;
@@ -768,6 +776,7 @@
             signal.strip_length=Math.abs(end_y-start_y);
             signal.strip_width=Math.abs(end_x-start_x);
             signal.numberOfSamples=Math.ceil(signal.strip_length*samplingRate);
+
             var increment=Math.floor(signal.strip_length/signal.numberOfSamples);
 
 
@@ -776,10 +785,21 @@
 
             
             for (var i=start_y; i < end_y; i+=increment){
+                var test_r=0;
+                var test_g=0;
+                var test_b=0;
 
+
+                //averaging rgb values along each band   
                 for(var j=start_x; j < end_x; j++){
-                    
+                    rgb=getPixelRGB(pixels,j,i,imageWidth,imageHeight);
+                    test_r+=rgb.r;
+                    test_g+=rgb.g;
+                    test_b+=rgb.b;
                 }
+                
+                rgbVector[index]={"r":test_r/signal.strip_width,"g":test_g/signal.strip_width,"b":test_b/signal.strip_width};
+                index++;
 
                 context.fillRect(start_x,i,signal.strip_width,1);
             }
@@ -792,8 +812,8 @@
     function processAllLanes(){
         for(var i in markerBoxes){
             var test=markerBoxes[i];
-            console.log("Box: "+test);
-            processLane(test[0],test[1],test[2],test[3],0.15);
+            var result=processLane(test[0],test[1],test[2],test[3],0.2);
+            console.log("Result: "+result.rgbVector.length);
         }
 
     };
