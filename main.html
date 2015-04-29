@@ -28,7 +28,23 @@
         margin: 10px;
         padding: 0px
       }
+      #container{
+        float:left;
+      }
+      #graph{
+        float:left;
+      }
+      #graph div {
+          font: 10px sans-serif;
+          background-color: red;
+          text-align: right;
+          padding: 3px;
+          margin: 1px;
+          color: white;
+    }
     </style>
+
+    
 
 </head>
 <body onload="DisplayRandomMap()">
@@ -52,7 +68,6 @@
 
 </div>
 <div id="graph">
-
 </div>
 <script>
     // file address: https://dl.dropboxusercontent.com/s/94xx26gfjrymr09/index.html
@@ -123,8 +138,11 @@
     }
 
 
-    //the boxes that mark the lanes 
+    //array that has the positional data of the lanes to be processed
     var markerBoxes=[];
+
+    //the array of signal objects of the processed lanes
+    var laneData=[];
 //*****************************************************************************************************
 //*****************************************************************************************************
 //*********************************** YOU CAN COPY CODE AS FROM HERE INTO THE INNER ONE****************
@@ -757,7 +775,8 @@
     //end_y: bottom marker box top y
     //sampling rate: floating point number between (0.0,1.0) specifying what percentage
     //of the lane will be processed
-    //Return value: the signal object of one lane with the following properties
+    //Return value: 
+    //signal object of one lane with the following properties
     //  rgbVector: rgb average of each sampled band
     //  start_x, end_x, start_y, end_y
     //  strip_length, strip_width
@@ -810,10 +829,11 @@
     }
 
     function processAllLanes(){
+        var i=0;
         for(var i in markerBoxes){
             var test=markerBoxes[i];
-            var result=processLane(test[0],test[1],test[2],test[3],0.2);
-            console.log("Result: "+result.rgbVector.length);
+            laneData[i]=processLane(test[0],test[1],test[2],test[3],0.2);
+            i++;
         }
 
     };
@@ -826,6 +846,7 @@
         getBlackBoxes();
         processAllLanes();
     };
+
 
 </script>
 </body>
