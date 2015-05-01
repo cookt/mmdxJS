@@ -53,8 +53,7 @@
     <button type="button" onclick = "getRuntime(getBlackBoxes)"> Find Black Boxes </button>
     <button type="button" onclick = "getRuntime(LocateMe)"> Find Location </button>
     <button type="button" onclick = "getRuntime(processAllLanes)">Process Lanes</button>
-    <button type="button" onclick= "getRuntime(doItAll)">do it all</button>
-    <button type="button" onclick="graph(1)">Graph</button>
+    <button type="button" onclick= "getRuntime(analyzeImage)">do it all</button>
     <p> Test Functions</p>
     <button type="button" onclick = "getRuntime(oldRetectRectangle)"> Old Detect rectange </button>
     <button type="button" onclick = "getRuntime(colorRedBoxHSL)"> HSL Color Red Box</button>
@@ -64,7 +63,8 @@
 </div>
 <div id="graph-container">
     <h3 id="chartTitle"></h3>
-    <canvas id="graph" width="800" height="800"></canvas>
+    <canvas id="graph" width="900" height="600"></canvas>
+    <p>Graph Lane:</p><input type="number" id="laneNo" name="laneNo" value="0" min="0" oninput="input()">
 </div>
 
 <script>
@@ -794,7 +794,7 @@
             signal.strip_width=Math.abs(end_x-start_x);
             signal.numberOfSamples=Math.ceil(signal.strip_length*samplingRate);
 
-            var increment=Math.floor(signal.strip_length/signal.numberOfSamples);
+            var increment=Math.floor(signal.strip_length/(signal.numberOfSamples-1));
 
 
             var rgbVector=[];
@@ -833,7 +833,7 @@
 
     function processAllLanes(){
         var i=0;
-        var samplingRate=0.2;
+        var samplingRate=0.4;
         for(var i in markerBoxes){
             var test=markerBoxes[i];
             laneData[i]=processLane(test[0],test[1],test[2],test[3],samplingRate);
@@ -842,7 +842,7 @@
 
     };
 
-    function doItAll(){
+    function analyzeImage(){
         detect();
         crop();
         rotate();
@@ -855,7 +855,10 @@
     function graph(laneIndex){
         var lane=laneData[laneIndex];
         var rgb=lane.rgbVector;
-        //console.log(rgb);
+        console.log("strip_length"+lane.strip_length);
+        console.log("samplingRate"+lane.samplingRate);
+        console.log("#samples: "+lane.numberOfSamples); //sometimes off by 1
+        console.log("rgbVector:"+rgb.length);
         var xLabels=range(rgb.length);
         var ctx = document.getElementById("graph").getContext("2d");
 
@@ -900,6 +903,15 @@
         };
         $("#chartTitle").text("RGB values for each sampled band for lane#"+laneIndex);
         var chart=new Chart(ctx).Bar(data,Chart.defaults);
+    };
+    //input event for graph textbox
+    function input(){
+        var laneNumber=$("#laneNo").val();
+        if (laneNumber>=0 || laneNumber<laneData.length){
+            graph(laneNumber);
+        } else{
+            alert("Please enter a number between 0 and "+laneData.length);
+        }
     };
 
 
