@@ -15,7 +15,7 @@
 
     <script type="text/javascript" src="cornerdetect.js"></script>
 
-    <script type="text/javascript" src="resources/d3.js" charset="utf-8"></script>
+    <script type="text/javascript" src="resources/Chart.js" charset="utf-8"></script>
 
     <!-- Adding Google API for Geolocation-->
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script>
@@ -31,16 +31,10 @@
       #container{
         float:left;
       }
-      #graph{
+      #graph-container{
         float:left;
       }
-      #graph div {
-          font: 10px sans-serif;
-          background-color: red;
-          text-align: right;
-          padding: 3px;
-          margin: 1px;
-          color: white;
+      
     }
     </style>
 
@@ -60,6 +54,7 @@
     <button type="button" onclick = "getRuntime(LocateMe)"> Find Location </button>
     <button type="button" onclick = "getRuntime(processAllLanes)">Process Lanes</button>
     <button type="button" onclick= "getRuntime(doItAll)">do it all</button>
+    <button type="button" onclick="graph(1)">Graph</button>
     <p> Test Functions</p>
     <button type="button" onclick = "getRuntime(oldRetectRectangle)"> Old Detect rectange </button>
     <button type="button" onclick = "getRuntime(colorRedBoxHSL)"> HSL Color Red Box</button>
@@ -67,8 +62,11 @@
     <div id="map-canvas"></div>
 
 </div>
-<div id="graph">
+<div id="graph-container">
+    <h3 id="chartTitle"></h3>
+    <canvas id="graph" width="800" height="800"></canvas>
 </div>
+
 <script>
     // file address: https://dl.dropboxusercontent.com/s/94xx26gfjrymr09/index.html
 
@@ -800,6 +798,7 @@
 
 
             var rgbVector=[];
+            var hslVector=[];
             var index=0;
 
             
@@ -816,23 +815,28 @@
                     test_g+=rgb.g;
                     test_b+=rgb.b;
                 }
-                
-                rgbVector[index]={"r":test_r/signal.strip_width,"g":test_g/signal.strip_width,"b":test_b/signal.strip_width};
+                test_r/=signal.strip_width;
+                test_g/=signal.strip_width;
+                test_b/=signal.strip_width;
+                rgbVector[index]={"r":test_r,"g":test_g,"b":test_b};
+                hslVector[index]=rgbToHsl(test_r,test_g,test_b);
                 index++;
 
                 context.fillRect(start_x,i,signal.strip_width,1);
             }
 
             signal.rgbVector=rgbVector;
-            
+            signal.hslVector=hslVector;
+
             return signal;
     }
 
     function processAllLanes(){
         var i=0;
+        var samplingRate=0.2;
         for(var i in markerBoxes){
             var test=markerBoxes[i];
-            laneData[i]=processLane(test[0],test[1],test[2],test[3],0.2);
+            laneData[i]=processLane(test[0],test[1],test[2],test[3],samplingRate);
             i++;
         }
 
@@ -845,6 +849,57 @@
         removeMarkers();
         getBlackBoxes();
         processAllLanes();
+    };
+
+    //graphs the rgb values for the given laneIndex
+    function graph(laneIndex){
+        var lane=laneData[laneIndex];
+        var rgb=lane.rgbVector;
+        //console.log(rgb);
+        var xLabels=range(rgb.length);
+        var ctx = document.getElementById("graph").getContext("2d");
+
+        var r_data=[];
+        var g_data=[];
+        var b_data=[];
+
+        for (var colors in rgb){
+            r_data[colors]=rgb[colors].r;
+            g_data[colors]=rgb[colors].g;
+            b_data[colors]=rgb[colors].b;
+        }
+        //console.log(r_data);
+        var data = {
+            labels: xLabels,
+            datasets: [
+                {
+                    label: "r values",
+                    fillColor: "rgba(255,0,0,0.5)",
+                    strokeColor: "rgba(255,0,0,0.8)",
+                    highlightFill: "rgba(255,0,0,0.75)",
+                    highlightStroke: "rgba(255,0,0,1)",
+                    data: r_data
+                },
+                {
+                    label: "g values",
+                    fillColor: "rgba(0,255,0,0.5)",
+                    strokeColor: "rgba(0,255,0,0.8)",
+                    highlightFill: "rgba(0,255,0,0.75)",
+                    highlightStroke: "rgba(0,255,0,1)",
+                    data: g_data
+                },
+                {
+                    label: "b values",
+                    fillColor: "rgba(0,0,255,0.5)",
+                    strokeColor: "rgba(0,0,255,0.8)",
+                    highlightFill: "rgba(0,0,255,0.75)",
+                    highlightStroke: "rgba(0,0,255,1)",
+                    data: b_data
+                }
+            ]
+        };
+        $("#chartTitle").text("RGB values for each sampled band for lane#"+laneIndex);
+        var chart=new Chart(ctx).Bar(data,Chart.defaults);
     };
 
 
