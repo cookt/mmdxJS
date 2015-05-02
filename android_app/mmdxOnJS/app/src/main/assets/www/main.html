@@ -756,6 +756,8 @@
         console.log(results.lat);
         console.log(results.lng);
         console.log(results.diagnosis);
+        var url = "localhost://5000";
+        location.href = url+"?lan="+results.lan+"&lng="+results.lng+"&results.diagnosis";
 
     }
 

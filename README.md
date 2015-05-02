@@ -1,6 +1,12 @@
-To see the webpage in the app:
-	Save all .html and .js files in app/src/main/assets/www.
-	Add function loadImage(image_base64){imageObj.src = image_base64}
+Troubleshooting:
+
+1. Degrees of rotation that do not work: 350, 290
+
+Hardcoded constants:
+
+1. isRed in helpers: 
+
+	(hue<=360 && hue >=357) || (hue <=20)) && hsl.s > .7 && hsl.l>.1 && hsl.l<.85
 
 External libraries used:
 
