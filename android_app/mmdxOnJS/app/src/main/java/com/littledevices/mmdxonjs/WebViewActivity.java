@@ -25,6 +25,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.*;
 import android.content.Context;
@@ -33,6 +34,7 @@ import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 
 public class WebViewActivity extends Activity {
@@ -79,39 +81,41 @@ public class WebViewActivity extends Activity {
 
         /** Allow the JavaScript to pass some data in to us. */
         @JavascriptInterface
-        public void setData(String newData) throws JSONException {
+        public void setData(String newData) throws JSONException, UnsupportedEncodingException {
             Log.d("checking if called", "MainActivity.setData()");
-            JSONArray streamer = new JSONArray(newData);
-            double[] data = new double[streamer.length()];
-            for (int i = 0; i < streamer.length(); i++) {
-                Double n = streamer.getDouble(i);
-                data[i] = n;
-            }
+            Log.d("checking if called", newData);
+//            JSONArray streamer = new JSONArray(newData);
+//            double[] data = new double[streamer.length()];
+//            for (int i = 0; i < streamer.length(); i++) {
+//                Double n = streamer.getDouble(i);
+//                data[i] = n;
+//            }
 
             //handle sending stuff over to the database
-            this.postData(data);
+            this.postData(newData);
         }
 
-        /** Allow the JavaScript to pass some data in to us. */
-        @JavascriptInterface
-        public void troubleShoot(String error) throws JSONException {
-            JSONArray streamer = new JSONArray(error);
-            double[] data = new double[streamer.length()];
-            for (int i = 0; i < streamer.length(); i++) {
-                Double n = streamer.getDouble(i);
-                data[i] = n;
-            }
-
-            //handle sending stuff over to the database
-            this.postData(data);
-        }
-
-        public void postData(double[] data) {
+        public void postData(String data) throws UnsupportedEncodingException {
             // Create a new HttpClient and Post Header
             HttpClient httpclient = new DefaultHttpClient();
-            String formattedData = "lat="+ data[0]+ "&lng="+ data[1] +"&diagnosis=Ebola";
-            String toPost = "http://mmdx.parseapp.com/send_result?"+ formattedData;
+
+            //String formattedData = "lat="+ data[0]+ "&lng="+ data[1] +"&diagnosis=Ebola";
+            //String toPost = "http://mmdx.parseapp.com/send_result?"+ formattedData;
+            String toPost = "http://mmdx.parseapp.com/send_data";
             HttpPost httppost = new HttpPost(toPost);
+
+            //Extract JSON we just created
+            JSONObject object = null;
+            try {
+                object = new JSONObject(data);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            String message = object.toString();
+            Log.d("checking if called message", message);
+            httppost.setEntity(new StringEntity(message, "UTF8"));
+            httppost.setHeader("Content-type", "application/json");
 
             try {
 

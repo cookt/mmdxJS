@@ -95,6 +95,27 @@
     var mmdx_image_tilted_left = getTestImageRotatedLeft();
     var mmdx_image_tilted_left2 = getTestImageRotatedLeft2();
 
+
+    // USED IN ANDROID
+
+    // function loadImage(image_base64){
+    //     imageObj = new Image();
+    //     mmdx_image_app = image_base64;
+    //     imageObj.src = image_base64;
+    //     //console.log("Image from android");
+    //     //console.log(image_base64.substring(0, 50));
+    //     imageObj.onload = function() {
+    //         imageHeight = imageObj.height;
+    //         imageWidth = imageObj.width;
+    //         canvas.height = imageHeight;
+    //         canvas.width = imageWidth;
+    //         context.drawImage(imageObj,0, 0);
+    //     }
+    // }
+
+
+//************ COMMENT OUT INSIDE ANDROID ***************
+
     //Set test image
     //var mmdx_image = mmdx_image_normal;
     var mmdx_image = getImageRotated10();
@@ -114,6 +135,7 @@
     function loadImage(image_base64){
         imageObj.src = image_base64
     }
+//******** END COMMENT OUT INSIDE ANDROID ***************
 
 
     //array that has the positional data of the lanes to be processed
@@ -669,7 +691,7 @@
             // call to function to send to DB
             var Results = mylocation;
             Results.diagnosis = "Ebola";
-            sendStuffToDB(Results);
+            sendDataToDB(Results);
             //END this call here
             console.log("This is my Location");
             console.log(mylocation.lat);
@@ -727,7 +749,7 @@
         //sends dummy data, not yet connected to website
         //location.href = url+ "lat="+results.lat+"&lng="+results.lng+"&diagnosis="+results.diagnosis;
         console.log("calling Set Data");
-        setData('['+ results.lat+","+ results.lng+']');
+        setData(JSON.stringify(results));
 
     }
 
