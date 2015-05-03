@@ -231,6 +231,8 @@ var oldRotate = function (c1,c2,c3,c4){
     context.restore();
     rotated = false;
 }
+
+//just the python range function, convenience
 function range(start, stop, step){
     if (typeof stop=='undefined'){
         // one param defined

@@ -64,7 +64,7 @@
 <div id="graph-container">
     <h3 id="chartTitle"></h3>
     <canvas id="graph" width="900" height="600"></canvas>
-    <p>Graph Lane:</p><input type="number" id="laneNo" name="laneNo" value="0" min="0" oninput="input()">
+    <p>Graph Lane:</p><input type="number" id="laneNo" name="laneNo" value="0" min="0" max="3" oninput="input()">
 </div>
 
 <script>
@@ -822,6 +822,8 @@
                 hslVector[index]=rgbToHsl(test_r,test_g,test_b);
                 index++;
 
+
+                //draws strip along band just processed
                 context.fillRect(start_x,i,signal.strip_width,1);
             }
 
@@ -833,7 +835,7 @@
 
     function processAllLanes(){
         var i=0;
-        var samplingRate=0.4;
+        var samplingRate=0.25;
         for(var i in markerBoxes){
             var test=markerBoxes[i];
             laneData[i]=processLane(test[0],test[1],test[2],test[3],samplingRate);
@@ -901,18 +903,31 @@
                 }
             ]
         };
-        $("#chartTitle").text("RGB values for each sampled band for lane#"+laneIndex);
+        $("#chartTitle").text("Average RGB values for each sampled band for lane#"+laneIndex);
         var chart=new Chart(ctx).Bar(data,Chart.defaults);
     };
     //input event for graph textbox
     function input(){
         var laneNumber=$("#laneNo").val();
-        if (laneNumber>=0 || laneNumber<laneData.length){
+        if (laneNumber>=0 || laneNumber<3){
             graph(laneNumber);
         } else{
-            alert("Please enter a number between 0 and "+laneData.length);
+            console.log("Can't graph outside of range");
+            //alert("Please enter a number between 0 and "+laneData.length);
         }
     };
+
+
+    //Parameters:
+    //  signal object for one lane
+    //Return value:
+    // a list of region objects defined by
+    //      -parent laneSignal
+    //      -start and end indices of laneSignal rgbvector
+    //      -list of rgb values
+    function redRegions(laneSignal){
+
+    }
 
 
 </script>
