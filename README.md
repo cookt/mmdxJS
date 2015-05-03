@@ -8,6 +8,13 @@ Hardcoded constants:
 
 	(hue<=360 && hue >=357) || (hue <=20)) && hsl.s > .7 && hsl.l>.1 && hsl.l<.85
 
+2. checkIfRotated in main:
+	the image is said to be rotated, if the points of the detected rectangle (obtained from tracking.js and adjusted after application of Harris operator) have a ratio of red/nonRed < .1
+
+3. removeMarkers in main:
+	padding = 10px;
+	removes markers 10px more towards the innner part of the marker
+
 External libraries used:
 
 1. Tracking.js

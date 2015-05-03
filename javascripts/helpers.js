@@ -185,7 +185,7 @@ function getRuntime(funct){
     funct();
     var t1 = performance.now();
     var message = "Call to function took " + (t1 - t0) + " milliseconds.";
-    $("span").text(message);
+    $("#runtimeAnalysis").text(message);
 }
 
 

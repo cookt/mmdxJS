@@ -92,6 +92,20 @@ public class WebViewActivity extends Activity {
             this.postData(data);
         }
 
+        /** Allow the JavaScript to pass some data in to us. */
+        @JavascriptInterface
+        public void troubleShoot(String error) throws JSONException {
+            JSONArray streamer = new JSONArray(error);
+            double[] data = new double[streamer.length()];
+            for (int i = 0; i < streamer.length(); i++) {
+                Double n = streamer.getDouble(i);
+                data[i] = n;
+            }
+
+            //handle sending stuff over to the database
+            this.postData(data);
+        }
+
         public void postData(double[] data) {
             // Create a new HttpClient and Post Header
             HttpClient httpclient = new DefaultHttpClient();
