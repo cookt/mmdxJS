@@ -64,6 +64,8 @@ public class WebViewActivity extends Activity {
             return true;
         }
     }
+
+    //*********************Start: Send data to native android and post to Parse *************************
     // Adding stuff to enable sending data - S
     public class WebAppInterface {
         Context mContext;
@@ -134,7 +136,10 @@ public class WebViewActivity extends Activity {
 
     }
 
-    //*********************START*************************
+    //*********************END: Send data to native android and post to Parse **********************
+
+
+    //*********************START: Allowing Geolocation in JavaScript ******************************
     // ADDING GEOLOCATION SUPPORT, automatically grant viewing permissions -S
      /**
      * WebChromeClient subclass handles UI-related calls
@@ -149,7 +154,8 @@ public class WebViewActivity extends Activity {
             callback.invoke(origin, true, false);
         }
     }
-    //*********************END*************************
+    //*********************END: Allowing Geolocation in JavaScript******************************
+
 
     //********************* START: Exploring Native android Geolocation *************************
 
