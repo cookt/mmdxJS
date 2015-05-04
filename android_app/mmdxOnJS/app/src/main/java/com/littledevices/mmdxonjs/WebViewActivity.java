@@ -124,10 +124,10 @@ public class WebViewActivity extends Activity {
                 
             } catch (ClientProtocolException e) {
                 // TODO Auto-generated catch block
-                Log.i("DanaSucks", "client Protocol exception");
+                Log.i("posDataError", "client Protocol exception");
             } catch (IOException e) {
                 // TODO Auto-generated catch block
-                Log.i("DanaSucks", "IOException");
+                Log.i("posDataError", "IOException");
             }
         } 
 
@@ -150,6 +150,15 @@ public class WebViewActivity extends Activity {
         }
     }
     //*********************END*************************
+
+    //********************* START: Exploring Native android Geolocation *************************
+
+
+
+
+
+
+    //********************* END: Exploring Native android Geolocation ***************************
 
     // Pass picture path to html file
     @Override
