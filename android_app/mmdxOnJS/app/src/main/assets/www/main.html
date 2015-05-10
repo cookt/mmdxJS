@@ -19,7 +19,6 @@
     <script type="text/javascript" src="test_images/test_images_rotated.js"></script>
 
     <!-- Own methods and helpers -->
-    <script type="text/javascript" src="javascripts/utils.js"></script>
     <script type="text/javascript" src="javascripts/helpers.js"></script>
     <script type="text/javascript" src="javascripts/data_structures.js"></script>
 
@@ -38,19 +37,16 @@
             <p id="runtimeAnalysis"></p>
             <p id="mousePos"></p>
         </div>
-        <div id="controls">
             
-            <div class="btn-group" role="group">
-                <button type="button" class="btn btn-default" onclick = "getRuntime(detect)"> Detect rectange </button>
-                <button type="button" class="btn btn-default" onclick = "getRuntime(crop)"> Crop </button>
-                <button type="button" class="btn btn-default" onclick = "getRuntime(rotate)"> Rotate </button>
-                <button type="button" class="btn btn-default" onclick = "getRuntime(removeMarkers)"> Remove markers </button>
-                <button type="button" class="btn btn-default" onclick = "getRuntime(getBlackBoxes)"> Find Black Boxes </button>
-                <button type="button" class="btn btn-default" onclick = "getRuntime(LocateMe)"> Find Location </button>
-                <button type="button" class="btn btn-default" onclick = "getRuntime(processAllLanes)">Process Lanes</button>
-            </div>
-        </div>
-    </div>
+     <div id ="controls" class="btn-group-vertical row" role="group">
+        <button type="button" class="btn btn-default" onclick = "getRuntime(detect)"> Detect rectange </button>
+        <button type="button" class="btn btn-default" onclick = "getRuntime(crop)"> Crop </button>
+        <button type="button" class="btn btn-default" onclick = "getRuntime(rotate)"> Rotate </button>
+        <button type="button" class="btn btn-default" onclick = "getRuntime(removeMarkers)"> Remove markers </button>
+        <button type="button" class="btn btn-default" onclick = "getRuntime(getBlackBoxes)"> Find Black Boxes </button>
+        <button type="button" class="btn btn-default" onclick = "getRuntime(LocateMe)"> Find Location </button>
+        <button type="button" class="btn btn-default" onclick = "getRuntime(processAllLanes)">Process Lanes</button>
+     </div>
     <div id="map-canvas" class="row"></div>
 </div>
 <div id="graph-container">
@@ -63,7 +59,7 @@
     
 //********************************** GEOLOCATION SETUP **********************************
     var mapOptions = {
-        zoom: 2
+        zoom: 1
       };
     var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
     var DisplayRandomMap = function(){
