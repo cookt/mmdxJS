@@ -185,6 +185,10 @@ public class WebViewActivity extends Activity {
         //geolocation start
         mWebView.getSettings().setGeolocationEnabled(true);  // enabling geolocation -s
         mWebView.getSettings().setBuiltInZoomControls(true); //enabling zoom -s
+
+        mWebView.getSettings().setLoadWithOverviewMode(true);
+        mWebView.getSettings().setUseWideViewPort(true);
+
         mWebView.getSettings().setAppCacheEnabled(true);
         mWebView.getSettings().setDatabaseEnabled(true);
         mWebView.getSettings().setDomStorageEnabled(true);
