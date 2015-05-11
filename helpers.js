@@ -111,7 +111,7 @@ var  getPixelPosition = function(x, y, imageWidth, imageHeight){
 var isRed = function(px){
     var  hsl = rgbToHsl(px.r, px.g,px.b);
     var hue = hsl.h * 360;
-    if (((hue<=360 && hue >=357) || (hue <=20)) && hsl.s > .7 && hsl.l>.1 && hsl.l<.85){
+    if (((hue<=360 && hue >=320) || (hue <=10)) && hsl.s > .3 && hsl.l>.1 && hsl.l<.85){
         return true
     }
     else{

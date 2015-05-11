@@ -103,9 +103,22 @@
         imageObj.onload = function() {
             imageHeight = imageObj.height;
             imageWidth = imageObj.width;
-            canvas.height = imageHeight;
-            canvas.width = imageWidth;
-            context.drawImage(imageObj,0, 0);
+            //canvas.height = imageHeight;
+            //canvas.width = imageWidth;
+            //context.drawImage(imageObj,0, 0);
+            canvas.height = 500*(imageHeight/imageWidth);
+            canvas.width = 500;
+            /// step 1
+            var oc = document.createElement('canvas'),
+                    octx = oc.getContext('2d');
+            oc.width = imageWidth * 0.5;
+            oc.height = imageHeight * 0.5;
+            octx.drawImage(imageObj, 0, 0, oc.width, oc.height);
+            /// step 2
+            octx.drawImage(oc, 0, 0, oc.width * 0.5, oc.height * 0.5);
+
+            context.drawImage(oc, 0, 0, oc.width * 0.5, oc.height * 0.5,
+                    0, 0, canvas.width, canvas.height);
         }
     }
 

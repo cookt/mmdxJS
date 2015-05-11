@@ -117,9 +117,9 @@
 
     //Set test image
     //var mmdx_image = mmdx_image_normal;
-    var mmdx_image = getImageRotated10();
+    //var mmdx_image = getImageRotated10();
 
-    imageObj.src = mmdx_image_tilted_left;
+    imageObj.src = "https://dl.dropboxusercontent.com/s/a75cdy8umi5l178/2015-05-11%2014.49.32.jpg";
     imageObj.crossOrigin = "anonymous"; //just in case
 
 
@@ -127,13 +127,28 @@
     imageObj.onload = function() {
         imageHeight = imageObj.height;
         imageWidth = imageObj.width;
-        canvas.height = imageHeight;
-        canvas.width = imageWidth;
-        context.drawImage(imageObj,0, 0);
+        canvas.height = 800*(imageHeight/imageWidth);
+        canvas.width = 800;
+        /// step 1
+        var oc = document.createElement('canvas'),
+                octx = oc.getContext('2d');
+
+        oc.width = imageWidth * 0.5;
+        oc.height = imageHeight * 0.5;
+        octx.drawImage(imageObj, 0, 0, oc.width, oc.height);
+
+        /// step 2
+        octx.drawImage(oc, 0, 0, oc.width * 0.5, oc.height * 0.5);
+
+        context.drawImage(oc, 0, 0, oc.width * 0.5, oc.height * 0.5,
+                0, 0, canvas.width, canvas.height);
+        //canvas.height = imageHeight;
+        //canvas.width = imageWidth;
+        //context.drawImage(imageObj,0, 0);
     };
-    function loadImage(image_base64){
-        imageObj.src = image_base64
-    }
+    //function loadImage(image_base64){
+    //    imageObj.src = image_base64
+    //}
 //******** END COMMENT OUT INSIDE ANDROID ***************
 
 
