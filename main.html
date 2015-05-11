@@ -1,3 +1,4 @@
+
 <!DOCTYPE HTML>
 <html>
 <head>
@@ -25,8 +26,6 @@
 
     <!-- Google API for Geolocation-->
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script>
-
-
     
 
 </head>
@@ -41,6 +40,7 @@
         <div id="controls">
             
             <div class="btn-group" role="group">
+                <button type="button" class="btn btn-default" onclick = "getRuntime(analyze)"> Analyze All </button>
                 <button type="button" class="btn btn-default" onclick = "getRuntime(detect)"> Detect rectange </button>
                 <button type="button" class="btn btn-default" onclick = "getRuntime(crop)"> Crop </button>
                 <button type="button" class="btn btn-default" onclick = "getRuntime(rotate)"> Rotate </button>
@@ -121,10 +121,10 @@
 //************ COMMENT OUT INSIDE ANDROID ***************
 
     //Set test image
-    //var mmdx_image = mmdx_image_normal;
-    var mmdx_image = getImageRotated10();
+    var mmdx_image = mmdx_image_normal;
+    //var mmdx_image = getImageRotated10();
 
-    imageObj.src = mmdx_image_tilted_left;
+    imageObj.src = mmdx_image;//"https://dl.dropboxusercontent.com/s/a75cdy8umi5l178/2015-05-11%2014.49.32.jpg";
     imageObj.crossOrigin = "anonymous"; //just in case
 
 
@@ -132,13 +132,28 @@
     imageObj.onload = function() {
         imageHeight = imageObj.height;
         imageWidth = imageObj.width;
-        canvas.height = imageHeight;
-        canvas.width = imageWidth;
-        context.drawImage(imageObj,0, 0);
+        canvas.height = 800*(imageHeight/imageWidth);
+        canvas.width = 800;
+        /// step 1
+        var oc = document.createElement('canvas'),
+                octx = oc.getContext('2d');
+
+        oc.width = imageWidth * 0.5;
+        oc.height = imageHeight * 0.5;
+        octx.drawImage(imageObj, 0, 0, oc.width, oc.height);
+
+        /// step 2
+        octx.drawImage(oc, 0, 0, oc.width * 0.5, oc.height * 0.5);
+
+        context.drawImage(oc, 0, 0, oc.width * 0.5, oc.height * 0.5,
+                0, 0, canvas.width, canvas.height);
+        //canvas.height = imageHeight;
+        //canvas.width = imageWidth;
+        //context.drawImage(imageObj,0, 0);
     };
-    function loadImage(image_base64){
-        imageObj.src = image_base64
-    }
+    //function loadImage(image_base64){
+    //    imageObj.src = image_base64
+    //}
 //******** END COMMENT OUT INSIDE ANDROID ***************
 
 
@@ -164,6 +179,10 @@
             
     });
 //********************************** END CANVAS SETUP **********************************
+
+function analyze (){
+
+}
 
 
 //********************************** RECOGNITION: MARKER DETECTION *********************
@@ -594,7 +613,7 @@
 
 //****************************** ANALYSIS: LANE PROCESSING ***************************
 
-//Parameters:
+    //Parameters:
     //start_x: lane left line x
     //start_y: top marker box bottom y
     //end_x: lane right line x
@@ -630,7 +649,7 @@
             var index=0;
 
             
-            for (var i=start_y+2; i < end_y; i+=increment){
+            for (var i=start_y; i < end_y; i+=increment){
                 var test_r=0;
                 var test_g=0;
                 var test_b=0;
@@ -663,7 +682,7 @@
     //Runs processLane routine on list of lanes whose endpoints were computed into markerBoxes
     function processAllLanes(){
         var i=0;
-        var samplingRate=0.4;
+        var samplingRate=0.3;
         for(var i in markerBoxes){
             var test=markerBoxes[i];
             laneData[i]=processLane(test[0],test[1],test[2],test[3],samplingRate);
@@ -921,7 +940,7 @@
     function generateDiagnosis(){
         var tableData=[];
         for (var i=0; i<laneData.length;i++){
-            console.log("-------------------");
+            console.log(i+"------------------");
             tableData[i]=findRedRegions(laneData[i]);
             console.log(tableData[i]);
         }

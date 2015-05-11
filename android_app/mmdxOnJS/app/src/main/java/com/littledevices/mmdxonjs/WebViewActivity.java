@@ -37,6 +37,11 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 
+//import com.google.android.gms.common.api.GoogleApiClient;
+
+
+
+
 public class WebViewActivity extends Activity {
     private WebView mWebView;
     private String imagePath; //passed from the camera activity
@@ -64,6 +69,8 @@ public class WebViewActivity extends Activity {
             return true;
         }
     }
+
+    //*********************Start: Send data to native android and post to Parse *************************
     // Adding stuff to enable sending data - S
     public class WebAppInterface {
         Context mContext;
@@ -124,17 +131,20 @@ public class WebViewActivity extends Activity {
                 
             } catch (ClientProtocolException e) {
                 // TODO Auto-generated catch block
-                Log.i("DanaSucks", "client Protocol exception");
+                Log.i("posDataError", "client Protocol exception");
             } catch (IOException e) {
                 // TODO Auto-generated catch block
-                Log.i("DanaSucks", "IOException");
+                Log.i("posDataError", "IOException");
             }
         } 
 
 
     }
 
-    //*********************START*************************
+    //*********************END: Send data to native android and post to Parse **********************
+
+
+    //*********************START: Allowing Geolocation in JavaScript ******************************
     // ADDING GEOLOCATION SUPPORT, automatically grant viewing permissions -S
      /**
      * WebChromeClient subclass handles UI-related calls
@@ -149,7 +159,7 @@ public class WebViewActivity extends Activity {
             callback.invoke(origin, true, false);
         }
     }
-    //*********************END*************************
+    //*********************END: Allowing Geolocation in JavaScript******************************
 
     // Pass picture path to html file
     @Override
@@ -175,6 +185,10 @@ public class WebViewActivity extends Activity {
         //geolocation start
         mWebView.getSettings().setGeolocationEnabled(true);  // enabling geolocation -s
         mWebView.getSettings().setBuiltInZoomControls(true); //enabling zoom -s
+
+        mWebView.getSettings().setLoadWithOverviewMode(true);
+        mWebView.getSettings().setUseWideViewPort(true);
+
         mWebView.getSettings().setAppCacheEnabled(true);
         mWebView.getSettings().setDatabaseEnabled(true);
         mWebView.getSettings().setDomStorageEnabled(true);
@@ -184,8 +198,17 @@ public class WebViewActivity extends Activity {
         //geolocation end
         mWebView.loadUrl("file:///android_asset/www/main.html");
 
-
+        // START: working on native android geolocation -s (experimental)
+//        protected synchronized void buildGoogleApiClient() {
+//        mGoogleApiClient = new GoogleApiClient.Builder(this)
+//            .addConnectionCallbacks(this)
+//            .addOnConnectionFailedListener(this)
+//            .addApi(LocationServices.API)
+//            .build();
+//        };
+        // END: working on native android geolocation
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -209,13 +232,27 @@ public class WebViewActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+    //to DEBUG?
     public void backToMain(View view){
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
     }
 
-
-
+    //********************* START: Exploring Native android Geolocation *************************
+    // links: https://developer.android.com/training/location/retrieve-current.html
+    // UNTESTED
+//    @Override
+//    public void onConnected(Bundle connectionHint) {
+//        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+//                mGoogleApiClient);
+//        if (mLastLocation != null) {
+//            mLatitudeText.setText(String.valueOf(mLastLocation.getLatitude()));
+//            mLongitudeText.setText(String.valueOf(mLastLocation.getLongitude()));
+//            Log.d("Latitude form Android", String.valueOf(mLastLocation.getLatitude())));
+//            Log.d("LOngitude form Android", String.valueOf(mLastLocation.getLongitude())));
+//        }
+//    }
+    //********************* END: Exploring Native android Geolocation ***************************
 
 }
 

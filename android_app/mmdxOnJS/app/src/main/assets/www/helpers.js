@@ -1,3 +1,16 @@
+//CONSTANTS used in isRed:
+
+var SATURATION_LOWER_BOUND = 0.3;
+var SATURATION_UPPER_BOUND = 1.0;
+
+var LIGHTNESS_LOWER_BOUND = 0.1;
+var LIGHTNESS_UPPER_BOUND = 0.85;
+
+var HUE_BOTTOM_LOWER_BOUND = 0;
+var HUE_BOTTOM_UPPER_BOUND = 10;
+var HUE_TOP_LOWER_BOUND = 320;
+var HUE_TOP_UPPER_BOUND = 360;
+
 
 // HELPERS
 var getPixelRGB = function(pixels, x,y, imageWidth, imageHeight){
@@ -111,7 +124,10 @@ var  getPixelPosition = function(x, y, imageWidth, imageHeight){
 var isRed = function(px){
     var  hsl = rgbToHsl(px.r, px.g,px.b);
     var hue = hsl.h * 360;
-    if (((hue<=360 && hue >=357) || (hue <=20)) && hsl.s > .7 && hsl.l>.1 && hsl.l<.85){
+    if (((hue<=HUE_TOP_UPPER_BOUND && hue >=HUE_TOP_LOWER_BOUND) ||
+    (hue >=HUE_BOTTOM_LOWER_BOUND && hue <=HUE_BOTTOM_UPPER_BOUND)) &&
+    (hsl.s > SATURATION_LOWER_BOUND && hsl.s <= SATURATION_UPPER_BOUND) &&
+    (hsl.l>LIGHTNESS_LOWER_BOUND && hsl.l<LIGHTNESS_UPPER_BOUND)){
         return true
     }
     else{
@@ -354,6 +370,33 @@ function colorRedBoxRGB() {
     }
     context.putImageData(imgData, 0, 0);
 }
+
+
+// utils
+
+Array.prototype.minElement = function(){
+    var n = this.length;
+    var minElement = this[0];
+    for (var i = 0; i< n; i++){
+        if (this[i]<= minElement){
+            minElement = this[i];
+        }
+    }
+    return minElement;
+}
+
+Array.prototype.maxElement = function(){
+    var n = this.length;
+    var maxElement = this[0];
+    for (var i = 0; i< n; i++){
+        if (this[i]>= maxElement){
+            maxElement = this[i];
+        }
+    }
+    return maxElement;
+}
+
+
 
 
 

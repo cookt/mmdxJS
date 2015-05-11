@@ -18,3 +18,12 @@
 	float:left;
 }
 
+
+.btn{
+    margin: 15px;
+    width: 20%;
+    height: 100px;
+    font-size: 30px!important;
+    font-weight:bold!important;
+    border:5px;
+}
