@@ -1,4 +1,9 @@
 //classes
+function Error(msg, origin){
+    this.msg = msg;
+    this.origin = origin;
+}
+
 function Point(x,y){
     this.x = x;
     this.y = y;
@@ -95,92 +100,138 @@ Rectangle.prototype.findBottomCorner = function(){
     }
 }
 
-Rectangle.prototype.findHighestSideCorner = function(){
-	var a = this.corners[0];
-	var b = this.corners[1];
-	var c = this.corners[2];
-	var d = this.corners[3];
+Rectangle.prototype.findRightCorner = function(){
+    if (!this.rotated){
+        alert("Rectangle is not rotated");
+        return;
+    }
+    var a = this.corners[0];
+    var b = this.corners[1];
+    var c = this.corners[2];
+    var d = this.corners[3];
     
-    var ys = [a.y, b.y, c.y, d.y];
-    ys.sort(function(a, b){return a-b});
-    console.log("sort");
-    console.log(ys);
-    //second highest element
-    var y = ys[1];
-    if (a.y==y){
+    //highest element
+    var x = [a.x, b.x, c.x, d.x].maxElement();
+    if (a.x==x){
         return a;
     }
-    else if (b.y==y){
+    else if (b.x==x){
         return b;
     }
-    else if (c.y==y){
+    else if (c.x==x){
         return c;
     }
-    else if (d.y==y){
+    else if (d.x==x){
         return d;
     }
     //should never get here
     else{
-        alert("Error in findHighestSideCorner function");
+        alert("Error in findUpperCorner function");
     }
 }
 
-Rectangle.prototype.findLowestSideCorner = function(){
-	var a = this.corners[0];
-	var b = this.corners[1];
-	var c = this.corners[2];
-	var d = this.corners[3];
+Rectangle.prototype.findLeftCorner = function(){
+    if (!this.rotated){
+        alert("Rectangle is not rotated");
+        return;
+    }
+    var a = this.corners[0];
+    var b = this.corners[1];
+    var c = this.corners[2];
+    var d = this.corners[3];
     
-    var ys = [a.y, b.y, c.y, d.y];
-    ys.sort(function(a, b){return a-b});
-    console.log("sort");
-    console.log(ys);
-    //second highest element
-    var y = ys[2];
-    if (a.y==y){
+    //highest element
+    var x = [a.x, b.x, c.x, d.x].minElement();
+    if (a.x==x){
         return a;
     }
-    else if (b.y==y){
+    else if (b.x==x){
         return b;
     }
-    else if (c.y==y){
+    else if (c.x==x){
         return c;
     }
-    else if (d.y==y){
+    else if (d.x==x){
         return d;
     }
     //should never get here
     else{
-        alert("Error in findLowestSideCorner function");
+        alert("Error in findUpperCorner function");
     }
 }
 
+Rectangle.prototype.findDirectionOfRotation = function(){
+    var top_corner = this.findTopCorner();
+    var left_corner = this.findLeftCorner();
+    var right_corner = this.findRightCorner();
+    //CW
+    if (distance(top_corner, left_corner)>distance(top_corner, right_corner)){
+        return "CW";
+    }
+    else{
+        return "CCW";
+    }
+
+}
 Rectangle.prototype.findAngleOfRotation = function(){
-	var uc = this.findTopCorner();
-    var sideHigh = this.findHighestSideCorner();
-    var bc = this.findBottomCorner();
-    var sideLow = this.findLowestSideCorner();
+    //error checking
+    if (!this.rotated){
+        return new Error("Angle of rotation is not required, the rectangle is not rotated", "Rectangle.prototype.findAngleOfRotation");
+    }
+
+    var top = this.findTopCorner();
+    var left = this.findLeftCorner();
+    var bottom = this.findBottomCorner();
+    var right = this.findRightCorner();
+    var direction = this.findDirectionOfRotation();
+    console.log("Direction");
+    console.log(direction);
+    if (direction=="CW"){
+        var extra_top_point = new Point(top.x-10, top.y); 
+        var angle1 = findAngle(extra_top_point,top,left);
+
+        var extra_bottom_point = new Point(top.x+10, top.y); 
+        var angle2 = findAngle(extra_bottom_point,bottom, right);
+
+        var extra_left_point = new Point(left.x, left.y+10); 
+        var angle3 = findAngle(extra_left_point,left, bottom);
+
+        var extra_right_point = new Point(right.x, left.y-10); 
+        var angle4 = findAngle(extra_right_point,right, top);
+        var angles = [angle1, angle2, angle3, angle4];
+        var minAngle = angles.minElement();
         
-    // B = uc, A = uc with the same y but different x, C = side
-    var A = new Point(uc.x+10, uc.y);
-    var B = uc;
-    var C = sideHigh;
-    var angle1 = findAngle(A,B,C);
 
-    var A = sideLow;
-    var B = bc;
-    var C = new Point(bc.x+10, bc.y);
+        console.log("ANGLE CW");
+        console.log(angle1*180/Math.PI);
+        console.log(angle2*180/Math.PI);
+        console.log(angle3*180/Math.PI);
+        console.log(angle4*180/Math.PI); 
+        return new Angle(angle1, direction);
 
-    var angle2 = findAngle(A,B,C);
-    var avgAngle = (angle1 +Math.PI-angle2)/2;
+    }
+    else{
+        var extra_top_point = new Point(top.x+10, top.y); 
+        var angle1 = findAngle(extra_top_point,top,right);
 
-    if (sideHigh.x>uc.x){
+        var extra_bottom_point = new Point(top.x-10, top.y); 
+        var angle2 = findAngle(extra_bottom_point,bottom, left);
 
-		return new Angle(-1*avgAngle,"CCW");
-	}
-	
-	else{
-		return new Angle(Math.PI - avgAngle,"CW");
-	}
+        var extra_left_point = new Point(left.x, left.y-10); 
+        var angle3 = findAngle(extra_left_point,left, top);
+
+        var extra_right_point = new Point(right.x, left.y+10); 
+        var angle4 = findAngle(extra_right_point,right, bottom);
+
+        var angles = [angle1, angle2, angle3, angle4];
+        var minAngle = angles.minElement();
+        
+        console.log("ANGLE CCW");
+        console.log(angle1*180/Math.PI);
+        console.log(angle2*180/Math.PI); 
+        console.log(angle3*180/Math.PI);
+        console.log(angle4*180/Math.PI); 
+        return new Angle(2*Math.PI-angle1, direction);
+    }
     
 }

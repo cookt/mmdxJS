@@ -1,0 +1,16 @@
+#map-canvas {
+  height: 500px;
+  width:500px;
+  margin: 10px;
+  padding: 0px
+}
+#container{
+  float:left;
+}
+#graph-container{
+  float:left;
+} 
+.canvas-container{
+  padding:20px;
+  margin:30px;
+}

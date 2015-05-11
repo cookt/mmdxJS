@@ -1,101 +1,102 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-    <!-- tracking.js -->
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="stylesheets/style.css">
+    <link rel="stylesheet" href="resources/bootstrap.min.css">
+    <link rel="stylsesheet" href="resources/bootstrap-theme.min.css">
+
+    
+    <!-- External resources and libraries -->
     <script type="text/javascript" src="resources/tracking.js"></script>
-
-    <!-- functions to get test images in base 64-->
     <script type="text/javascript" src="resources/jquery.js"></script>
-    <script type="text/javascript" src="getImage64.js"></script>
+    <script type="text/javascript" src="resources/cornerdetect.js"></script>
+    <script type="text/javascript" src="resources/Chart.js" charset="utf-8"></script>
+    <script type="text/javascript" src="resources/bootstrap.min.js"></script>
 
-    <script type="text/javascript" src="utils.js"></script>
-    <script type="text/javascript" src="helpers.js"></script>
-    <script type="text/javascript" src="data_structures.js"></script>
+    <!-- Functions to get test images in base 64-->
+    <script type="text/javascript" src="test_images/initial_images.js"></script>
+    <script type="text/javascript" src="test_images/test_images_rotated.js"></script>
 
-    <script type="text/javascript" src="cornerdetect.js"></script>
+    <!-- Own methods and helpers -->
+    <script type="text/javascript" src="javascripts/utils.js"></script>
+    <script type="text/javascript" src="javascripts/helpers.js"></script>
+    <script type="text/javascript" src="javascripts/data_structures.js"></script>
 
-    <!-- Adding Google API for Geolocation-->
+    <!-- Google API for Geolocation-->
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script>
 
-    <!-- Adding some style for the map component -->
-    <style>
-      #map-canvas {
-        height: 500px;
-        width:500px;
-        margin: 10px;
-        padding: 0px
-      }
-    </style>
+
+    
 
 </head>
 <body onload="DisplayRandomMap()">
-<div id = "container">
-    <canvas id="canvas"></canvas>
-    <p> <span></span>.</p>
-    <p> Fast marker detection using tracking.js and Harris operator, option 2 </p>
-    <button type="button" onclick = "getRuntime(detect)"> Detect rectange </button>
-    <button type="button" onclick = "getRuntime(crop)"> Crop </button>
-    <button type="button" onclick = "getRuntime(rotate)"> Rotate </button>
-    <button type="button" onclick = "getRuntime(removeMarkers)"> Remove markers </button>
-    <button type="button" onclick = "getRuntime(getBlackBoxes)"> Find Black Boxes </button>
-    <button type="button" onclick = "getRuntime(LocateMe)"> Find Location </button>
-
-    <p> Test Functions</p>
-    <button type="button" onclick = "getRuntime(oldRetectRectangle)"> Old Detect rectange </button>
-    <button type="button" onclick = "getRuntime(colorRedBoxHSL)"> HSL Color Red Box</button>
-    <button type="button" onclick = "getRuntime(colorRedBoxRGB)"> RGB Color Red Box</button>
-    <div id="map-canvas"></div>
-
+<div class="container-fluid">
+    <div class="row">
+        <div class="canvas-container">
+            <canvas id="canvas" class="row"></canvas>
+            <p id="runtimeAnalysis"></p>
+            <p id="mousePos"></p>
+        </div>
+        <div id="controls">
+            
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-default" onclick = "getRuntime(detect)"> Detect rectange </button>
+                <button type="button" class="btn btn-default" onclick = "getRuntime(crop)"> Crop </button>
+                <button type="button" class="btn btn-default" onclick = "getRuntime(rotate)"> Rotate </button>
+                <button type="button" class="btn btn-default" onclick = "getRuntime(removeMarkers)"> Remove markers </button>
+                <button type="button" class="btn btn-default" onclick = "getRuntime(getBlackBoxes)"> Find Black Boxes </button>
+                <button type="button" class="btn btn-default" onclick = "getRuntime(LocateMe)"> Find Location </button>
+                <button type="button" class="btn btn-default" onclick = "getRuntime(processAllLanes)">Process Lanes</button>
+            </div>
+        </div>
+    </div>
+    <div id="map-canvas" class="row"></div>
 </div>
-<script>
-    // file address: https://dl.dropboxusercontent.com/s/94xx26gfjrymr09/index.html
+<div id="graph-container">
+    <h3 id="chartTitle"></h3>
+    <canvas id="graph" width="900" height="600"></canvas>
+    <p>Graph Lane:</p><input type="number" id="laneNo" name="laneNo" value="0" min="0" oninput="input()">
+</div>
 
-    // Test images hosted on Dropbox
-    // var mmdx_image_normal = "https://dl.dropboxusercontent.com/s/qlf5rw12j6jz6mn/25c.png";
-    // var mmdx_image_tilted_left = "https://dl.dropboxusercontent.com/s/qma3hkf1q3iuaim/Mmdx_tilted_left.jpg";
-    // var mmdx_image_tilted_right = "https://dl.dropboxusercontent.com/s/t0819dq8xu1o4hh/mmdx_tilted.jpg?dl=0";
+<script>
     
-    //********************************** GEOLOCATION STUFFS **********************************
+//********************************** GEOLOCATION SETUP **********************************
     var mapOptions = {
         zoom: 2
       };
     var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
-
     var DisplayRandomMap = function(){
         var options = {
             map: map,
             position: new google.maps.LatLng(60, 105),
             content: "Map Initialized"
           };
-
         var infowindow = new google.maps.InfoWindow(options);
         map.setCenter(options.position);
-    }
-    //********************************** END GEOLOCATION STUFFS **********************************
+    };
+//********************************** END GEOLOCATION SETUP **********************************
+
+//********************************** CANVAS SETUP **********************************
 
     var canvas = document.getElementById('canvas');
     var context = canvas.getContext('2d');
-    //var imageObj = new Image();
-    var imageObj;
+    var imageObj = new Image();
     var imageHeight, imageWidth;
     var imageData, pixels;
-
-    //values for identifying what is red
-    var redMax = 255; //need to check this values again (display dependency)!!!
-    var redMin = 180;
-    var blueMax = 85;
-    var greenMax = 85;
 
     //variables for the tracker.js
     var tracked_rect;
     var markerRectangle;
 
     //Test images in base64
-    var mmdx_image_app;
     var mmdx_image_normal = getTestImageNormal();
     var mmdx_image_tilted_right = getTestImageRotatedRight();
     var mmdx_image_tilted_left = getTestImageRotatedLeft();
     var mmdx_image_tilted_left2 = getTestImageRotatedLeft2();
+
+
+    // USED IN ANDROID
 
     function loadImage(image_base64){
         imageObj = new Image();
@@ -112,11 +113,14 @@
         }
     }
 
-    //Actual image we are using
-    //var mmdx_image = mmdx_image_app;
 
+//************ COMMENT OUT INSIDE ANDROID ***************
 
-    //imageObj.src = mmdx_image;
+    //Set test image
+    //var mmdx_image = mmdx_image_normal;
+    //var mmdx_image = getImageRotated10();
+
+    //imageObj.src = mmdx_image_tilted_left;
     //imageObj.crossOrigin = "anonymous"; //just in case
 
 
@@ -128,121 +132,80 @@
     //    canvas.width = imageWidth;
     //    context.drawImage(imageObj,0, 0);
     //};
+    //function loadImage(image_base64){
+    //    imageObj.src = image_base64
+    //}
+//******** END COMMENT OUT INSIDE ANDROID ***************
 
+
+    //array that has the positional data of the lanes to be processed
+    var markerBoxes=[];
+
+    //the array of signal objects of the processed lanes
+    var laneData=[];
 
 //*****************************************************************************************************
 //*****************************************************************************************************
-//*********************************** YOU CAN COPY CODE AS FROM HERE FROM THE OUTER ONE****************
+//*********************************** YOU CAN COPY CODE AS FROM HERE INTO THE INNER ONE****************
 //*****************************************************************************************************
 //*****************************************************************************************************
 
 
     //Register color tracking.js uses to identify markers
     tracking.ColorTracker.registerColor('marker', function(r, g, b) {
-        if (isRedRGB(r,g,b)) {
-            return true;
-        }
-        return false;
+        return isRed({r:r,g:g,b:b});
+            
     });
+//********************************** END CANVAS SETUP **********************************
 
 
-    // PURE DEMO FUNCTION (to show how good cornderdetect.js is, does nothing for image processing)
-    var cornerDetectionDemo = function(){
-        // parameters for Harris corner detection
-        // blockSize: Neighborhood size (3×3 or 5×5)
-        // k: Harris detector free parameter (recommends 0.04 ~ 0.15)
-        // qualityLevel: Parameter characterizing the minimal accepted quality of image corners
-        var params = { blockSize: 3, k: 0.04, qualityLevel: 0.001 };
-        // img: ImageData object
-        // returns Array of detected corners
-        var img = context.getImageData(0,0,imageWidth, imageHeight);
-        pixels = img.data;
-        var corners = CornerDetector.detect(img, CornerDetector.HARRIS, params);
-        var nonzero = [];
-        for (var i = 0; i< corners.length; i++){
-            if (corners[i]!=0){
-                nonzero.push(i);
-            }
-        }
-        console.log(nonzero);
-        for (var j=0; j< nonzero.length; j++){
-            var coords = getCoordsFromPixelOffset(nonzero[j], imageWidth, imageHeight);
-            context.beginPath();
-            context.arc(coords[0], coords[1], 3, 0, 2 * Math.PI, false);
-            context.lineWidth = 1;
-            context.strokeStyle = 'yellow';
-            context.stroke();
-        }
-        return corners;
-    }
+//********************************** RECOGNITION: MARKER DETECTION *********************
+    
+    /**
+    DETECTION:
+    Uses tracking.js to find markers (color details are specified above)
+    Finds a rectangle around a detected object
+         (tracker returns "rect" object {x: value, y:value, height:value, width:value, color:value})
+    If not rotated, will draw the abovementioned rectange and use its corners
+    If rotated, find the intersection of the actual rectange with the abovemention rectangle
+    and assigns corners correctly
+    */
+    var detect = function(){
 
-    function getBlackBoxes(){
-        //This is just for optimization might get rid of it if it causes problems
-        var searchWidth = canvas.width;
-        var searchHeight = canvas.height/2;
-        //coordinates of the black boxes
-        var boxes = [];
-        var firstBox = [];
-        var secondBox = [];
-        var thirdBox = [];
-        var fourthBox = [];
-        var pixelRow = context.getImageData(0, 0, searchWidth, 1);
-        var data = pixelRow.data;
+        imageData = context.getImageData(0,0,imageWidth, imageHeight);
+        pixels = imageData.data;
+        console.log("Start Detecting");
 
-        /**
-         * Finds the vertical middle of the row of black boxes. We use this row to search because the tops and bottoms of the boxes aren't perfectly aligned.
-         * @returns {number}
-         */
-        function getMiddleYOfBoxes() {
-            var startColumn = 0;
-            var horizontalMiddleOfBox = 0;
-            while (!foundFirstBoxEdge(data) && horizontalMiddleOfBox < 50) {
-                pixelRow = context.getImageData(startColumn, horizontalMiddleOfBox, searchWidth, 1);
-                data = pixelRow.data;
-                //console.log(horizontalMiddleOfBox);
-                horizontalMiddleOfBox++;
-            }
-            horizontalMiddleOfBox += canvas.height * .04;
-            return horizontalMiddleOfBox;
-        }
 
-        /**
-         * Fills the box arrays with their dimensions
-         */
-        function getBoxEdges(){
-            var startColumn = 0;
-            //alert("here");
-            var horizontalMiddleOfBox = getMiddleYOfBoxes();
-            //alert("here2");
-            var pixelRowMiddle = context.getImageData(startColumn, horizontalMiddleOfBox, searchWidth, 1);
-            var midData = pixelRowMiddle.data;
-            findBlackBoxEdgesFromMiddle(startColumn,boxes,midData,horizontalMiddleOfBox);
-            firstBox = [boxes[0],boxes[1]];
-            secondBox = [boxes[2],boxes[3]];
-            thirdBox = [boxes[4],boxes[5]];
-            fourthBox = [boxes[6],boxes[7]];
-        }
+        var tracker = new tracking.ColorTracker(['marker']);
+        tracker.on('track', function(event) {
+            event.data.forEach(function(rect) {
+                tracked_rect = rect;
+                var x = rect.x;
+                var y = rect.y;
+                var w = rect.width;
+                var h = rect.height;
+                //corners might change
+                var corners = [new Point(x,y),new Point(x+w, y+h), new Point(x+w,y), new Point(x, y+h)];
 
-        getBoxEdges();
+                var rotated = checkIfRotated();
+                markerRectangle = new Rectangle(corners, rotated);
 
-        function getHeights(box){
-            var pixelColumnMiddle  = context.getImageData(box[0],searchHeight,1,canvas.height-searchHeight);
-            var midData = pixelColumnMiddle.data;
-            for(var y = 0; y < midData.length; y+=4){
-                if(isBlackRGB()){
-
+                if (markerRectangle.isRotated()){
+                    findCorners();
                 }
-            }
-        }
+                drawRectangle(markerRectangle.getCorners());
+            });
+        });
+        tracking.track('#canvas', tracker); //start tracking
 
-        console.log("BOXES: " + " FIRST BOX: " + firstBox + " SECOND BOX: " + secondBox + " THIRD BOX: " + thirdBox + " FOURTH BOX: " + fourthBox);
-        drawLanes(firstBox);
-        drawLanes(secondBox);
-        drawLanes(thirdBox);
-        drawLanes(fourthBox);
-    }
+    };
 
-
+    
+    /**
+    Additional detection if the image is rotated and corners form tracking.js 
+    might not be exact
+    */
     var detectCorners = function(){
         // parameters for Harris corner detection
         // blockSize: Neighborhood size (3×3 or 5×5)
@@ -273,55 +236,11 @@
                 context.strokeStyle = 'yellow';
                 context.stroke();
             }
-
         }
 
         return redCorners;
-    }
-    /**
-    
-    DETECTION:
-
-    Uses tracking.js to find markers (color details are specified above)
-    Finds a rectangle around a detected object 
-         (tracker returns "rect" object {x: value, y:value, height:value, width:value, color:value})
-    If not rotated, will draw the abovementioned rectange and use its corners
-    If rotated, find the intersection of the actual rectange with the abovemention rectangle
-    and assigns corners correctly
-    */
-    
-    var detect = function(){
-
-        imageData = context.getImageData(0,0,imageWidth, imageHeight);
-        pixels = imageData.data;
-        console.log("Start Detecting");
-
-
-        var tracker = new tracking.ColorTracker(['marker']);
-        tracker.on('track', function(event) {
-            event.data.forEach(function(rect) {
-                tracked_rect = rect;
-                var x = rect.x;
-                var y = rect.y;
-                var w = rect.width;
-                var h = rect.height;
-                //corners might change
-                var corners = [new Point(x,y),new Point(x+w, y+h), new Point(x+w,y), new Point(x, y+h)];
-                
-
-                var rotated = checkIfRotated();
-                markerRectangle = new Rectangle(corners, rotated);
-
-                if (markerRectangle.isRotated()){
-                    findCorners();
-                }
-                drawRectangle(markerRectangle.getCorners());
-            });
-        });
-        tracking.track('#canvas', tracker); //start tracking
-
     };
-
+    
     /*
     Moves along the detected rectangle, if the majority of the points are red, assumes
     tracker found a correct rectangle
@@ -364,11 +283,9 @@
             }
         }
         if (countRed/numPoints < threshhold){
-            console.log("Rotated");
             return true;
         }
         else{
-            console.log("Not Rotated");
             return false;
         }
     };
@@ -382,12 +299,12 @@
         var w = tracked_rect.width;
         var h = tracked_rect.height;
         var c1, c2, c3, c4; //corners
-        
+
         //check possible combinations:
 
         var inc = -1;
 
-        // walk along the top rect edge (and lines right below), find the first points where 
+        // walk along the top rect edge (and lines right below), find the first points where
         // the detected rectange intersects the marker (first red point)
         while (!c1){
             inc++;
@@ -445,13 +362,12 @@
         }
         //adjust corners according to the Harris operator
         var cornersHarris = detectCorners();
-        //drawRotatedRectangle(c1,c2,c3,c4);
         var corners = [c1,c2,c3,c4];
         for (var i = 0; i< 4; i++){
             var closest = findClosest(corners[i], cornersHarris, imageWidth*0.02);
             if (closest){
                 corners[i] = closest;
-            }     
+            }
 
         }
         markerRectangle.setCorners(corners);
@@ -474,7 +390,9 @@
         context.closePath();
         context.stroke();
     };
+//********************************** END RECOGNITION: MARKER DETECTION *********************
 
+//********************************** RECOGNITION: ROTATION *********************************
     /*
     Rotates the image based on the angle between the top line of the rect (from tracker)
     and new rotated rect (whose corners are found in findCorners())
@@ -484,12 +402,11 @@
             alert("no need to rotate");
             return;
         }
-
         var c1 = markerRectangle.getCorners()[0];
         var c2 = markerRectangle.getCorners()[1];
         var c3 = markerRectangle.getCorners()[2];
         var c4 = markerRectangle.getCorners()[3];
-        
+
         //save image data so we can modify canvas
         var imageURL = canvas.toDataURL();
         var image = new Image();
@@ -500,10 +417,10 @@
         //find the center to rotate about
         var center = new Point(Math.round(tracked_rect.x+tracked_rect.width/2), Math.round(tracked_rect.y+tracked_rect.height/2));
         context.translate(1*center.x, 1*center.y);
+
         
-        //context.clearRect(0,0,canvas.width,canvas.height);
         context.save();
-        context.rotate(angle.radians);
+        context.rotate(angle.radians); //canvas rotate clockwise
         context.translate(-1*center.x, -1*center.y);
         context.drawImage(image,0, 0);
         context.restore();
@@ -512,6 +429,9 @@
         rotated = false;
 
     };
+//********************************** END RECOGNITION: ROTATION *********************
+
+//********************************** RECOGNITION: CROP *********************
 
     /*
     Crops the image by its markers (either rect from tracker or adjusted corners)
@@ -522,7 +442,6 @@
         var c2 = markerRectangle.getCorners()[1];
         var c3 = markerRectangle.getCorners()[2];
         var c4 = markerRectangle.getCorners()[3];
-        console.log("corners: ",c1,c2,c3,c4);
 
         // Create a canvas that we will use as a mask
         var maskCanvas = document.createElement('canvas');
@@ -549,9 +468,9 @@
         context.save();
 
     };
-
+//********************************** END RECOGNITION: REMOVE MARKERS *********************
     /*
-    Removes red markers, assumes the image is properly oriented 
+    Removes red markers, assumes the image is properly oriented
     */
     var removeMarkers = function(){
         var padding = 10;
@@ -581,7 +500,7 @@
         while (isRed(getPixelRGB(pixels, Math.round(w/2),y, w, h))) {
             y--;
         }
-        lowerEdge = y+1 + padding;
+        lowerEdge = y+1 - padding;
 
         //look for beginning of the left edge
         var x = 0;
@@ -602,47 +521,316 @@
         while (isRed(getPixelRGB(pixels, x,Math.round(h/2), w, h))) {
             x--;
         }
-        rightEdge = x-1 + padding;
+        rightEdge = x-1 - padding;
         console.log(leftEdge, rightEdge, upperEdge, lowerEdge);
         context.drawImage(canvas, leftEdge, upperEdge, rightEdge - leftEdge, lowerEdge - upperEdge, 0, 0, w, h);
 
-        /*
-        for (var x = 0; x < w; x++){
-            for (var y = 0; y < h; y++){
-                var px = getPixelRGB(pixels, x, y, w,h);
 
-                if (!(x >= leftEdge+padding && x <= rightEdge-padding && y >= upperEdge+padding && y <= lowerEdge-padding)){
-                    var position = getPixelPosition(x, y, w,h);
-                    //set everything outside of the image to white
-                    pixels[position] = 255;
-                    pixels[position+1] = 255;
-                    pixels[position+2] = 255;
-                }
+    }
 
+//****************************** END RECOGNITION: REMOVE MARKERS *********************    
+
+//****************************** RECOGNITION: BLACK BOX DETECTION ********************
+    function getBlackBoxes(){
+        //This is just for optimization might get rid of it if it causes problems
+        var searchWidth = canvas.width;
+        var searchHeight = canvas.height * .20;
+        //coordinates of the black boxes
+        var rawBoxData = [];
+        var boxArray = [];
+        var pixelRow = context.getImageData(0, 0, searchWidth, 1);
+        var data = pixelRow.data;
+
+        /**
+         * Finds the vertical middle of the row of black boxes. We use this row to search because the tops and bottoms of the boxes aren't perfectly aligned.
+         * @returns {number}
+         */
+        function getMiddleYOfBoxes() {
+            var startColumn = 0;
+            var horizontalMiddleOfBox = 0;
+            while (!foundFirstBoxEdge(data) && horizontalMiddleOfBox < searchHeight) {
+                pixelRow = context.getImageData(startColumn, horizontalMiddleOfBox, searchWidth, 1);
+                data = pixelRow.data;
+                horizontalMiddleOfBox++;
             }
+            horizontalMiddleOfBox += canvas.height * .04;
+            return horizontalMiddleOfBox;
         }
-        console.log(leftEdge, rightEdge, upperEdge, lowerEdge);
-        context.putImageData(imageData,0,0);
-        */
 
+        /**
+         * Fills the box arrays with their dimensions
+         */
+    function getBoxEdges(){
+            var startColumn = 0;
+            var horizontalMiddleOfBox = getMiddleYOfBoxes();
+            var pixelRowMiddle = context.getImageData(startColumn, horizontalMiddleOfBox, searchWidth, 1);
+            var midData = pixelRowMiddle.data;
+            findBlackBoxEdgesFromMiddle(startColumn,rawBoxData,midData);
+            for(var boxData = 0; boxData < rawBoxData.length; boxData += 2){
+                boxArray.push([rawBoxData[boxData],rawBoxData[boxData+1]])
+            }
+            for(var box = 0; box<boxArray.length; box++){
+                getHeights(boxArray[box]);
+                removeExtraYCoords(boxArray[box]);
+                drawLanes(boxArray[box]);
+            }
+            markerBoxes=boxArray;
+        }
+        getBoxEdges();
+    }
+
+
+//****************************** END RECOGNITION: BLACK BOX DETECTION ****************
+
+//****************************** ANALYSIS: LANE PROCESSING ***************************
+
+//Parameters:
+    //start_x: lane left line x
+    //start_y: top marker box bottom y
+    //end_x: lane right line x
+    //end_y: bottom marker box top y
+    //sampling rate: floating point number between (0.0,1.0) specifying what percentage
+    //of the lane will be processed
+    //Return value: 
+    //signal object of one lane with the following properties
+    //  rgbVector: rgb average of each sampled band
+    //  start_x, end_x, start_y, end_y
+    //  strip_length, strip_width
+    //  samplingRate, numberOfSamples
+    var processLane=function (start_x,end_x,start_y,end_y,samplingRate){
+            context.fillStyle="green";
+            pixels=context.getImageData(0,0,imageWidth,imageHeight).data;
+
+            var signal={};
+            signal.samplingRate=samplingRate;
+            signal.start_x=start_x;
+            signal.start_y=start_y;
+            signal.end_x=end_x;
+            signal.end_y=end_y;
+
+            signal.strip_length=Math.abs(end_y-start_y);
+            signal.strip_width=Math.abs(end_x-start_x);
+            signal.numberOfSamples=Math.ceil(signal.strip_length*samplingRate);
+
+            var increment=Math.floor(signal.strip_length/(signal.numberOfSamples-1));
+
+
+            var rgbVector=[];
+            var hslVector=[];
+            var index=0;
+
+            
+            for (var i=start_y; i < end_y; i+=increment){
+                var test_r=0;
+                var test_g=0;
+                var test_b=0;
+
+
+                //averaging rgb values along each band   
+                for(var j=start_x; j < end_x; j++){
+                    rgb=getPixelRGB(pixels,j,i,imageWidth,imageHeight);
+                    test_r+=rgb.r;
+                    test_g+=rgb.g;
+                    test_b+=rgb.b;
+                }
+                test_r/=signal.strip_width;
+                test_g/=signal.strip_width;
+                test_b/=signal.strip_width;
+                rgbVector[index]={"r":test_r,"g":test_g,"b":test_b};
+                hslVector[index]=rgbToHsl(test_r,test_g,test_b);
+                index++;
+
+                context.fillRect(start_x,i,signal.strip_width,1);
+            }
+
+            signal.rgbVector=rgbVector;
+            signal.hslVector=hslVector;
+
+            return signal;
+    }
+
+    function processAllLanes(){
+        var i=0;
+        var samplingRate=0.4;
+        for(var i in markerBoxes){
+            var test=markerBoxes[i];
+            laneData[i]=processLane(test[0],test[1],test[2],test[3],samplingRate);
+            i++;
+        }
+
+    }; 
+
+//************************** END ANALYSIS: LANE PROCESSING ****************************
+
+//************************** GEOLOCATION ********************************************** 
+
+    //handling geolocation here
+    //current version only works on the click of a button, therefore, we have a button up there "Locate Me"
+    //Later: pass in diagnosis as argument to LocateMe <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<IMPORTANT
+//handling geolocation here
+    //current version only works on the click of a button, therefore, we have a button up there "Locate Me"
+    //Later: pass in diagnosis as argument to LocateMe <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<IMPORTANT
+    function LocateMe() { // works on LG but not on OPO
+        console.log("Running Locate Me!");
+      // Try HTML5 geolocation
+      if(navigator.geolocation) {
+        console.log("NAVIGATOR OK");
+        //console.log(navigator.geolocation.getCurrentPosition);
+        navigator.geolocation.getCurrentPosition(function(position) {
+            console.log("POS Running");
+            var pos = new google.maps.LatLng(position.coords.latitude,
+                                           position.coords.longitude);
+            console.log("INFO-WINDOW Running");
+            var infowindow = new google.maps.InfoWindow({
+                map: map,
+                position: pos,
+                content: 'Location found using HTML5.'
+            });
+            console.log("myLOCATION Running");
+            var mylocation = {lat: position.coords.latitude, lng:position.coords.longitude};
+            // call to function to send to DB
+            var Results = mylocation;
+            Results.diagnosis = "Ebola";
+            sendDataToDB(Results);
+            //END this call here
+            console.log("This is my Location");
+            console.log(mylocation.lat);
+            console.log(mylocation.lng);
+            map.setCenter(pos);
+            }, function() {
+                console.log("HandleGeolocFailure within navigator Running");
+                handleGeolocationFailure(true);
+                },
+            { timeout:60000,
+              enableHighAccuracy:false
+          });
+        } else {
+            console.log("NAVIGATOR NOT OK");
+            // Browser doesn't support Geolocation
+            handleGeolocationFailure(false);
+        }
+    }
+    //this function handles the case when geolocation cannot be found, then it centers the map component at a random location
+    function handleGeolocationFailure(errorFlag) {
+        console.log("Running handleGeolocationFailure");
+      if (errorFlag) {
+        console.log("Error: The Geolocation service failed");
+        var content = 'Error: The Geolocation service failed.';
+      } else {
+        console.log("Error: Browser does not support geolocation");
+        var content = 'Error: Your browser doesn\'t support geolocation.';
+      }
+      var options = {
+        map: map,
+        position: new google.maps.LatLng(100, 105),
+        content: content
+      };
+      var infowindow = new google.maps.InfoWindow(options);
+      map.setCenter(options.position);
+  }
+
+//************************** END GEOLOCATION ******************************************
+
+//************************** SEND DATA TO SERVER ************************************** 
+
+    // Flow works as follows: detect Rectangle, Rotate, Crop, removeMarkers, FindBlackBoxes
+    //                        Analyse/ Diagnose (To be implemented), Find Location
+    //                        (Find Location then calls sendDataToDB);
+    // Automatically do image processing, Diagnosis and location finding when called
+    // this will be used to post stuff to the DB as well
+    function sendDataToDB(results){
+        //results contains: lng, lat, diagnosis
+        console.log("calling the diagnosis function");
+        console.log(results.lat);
+        console.log(results.lng);
+        console.log(results.diagnosis);
+
+        var url = "http://localhost:5000/results?"; //lat=10.1&lng=10&diagnosis=Ebola;
+        //sends dummy data, not yet connected to website
+        //location.href = url+ "lat="+results.lat+"&lng="+results.lng+"&diagnosis="+results.diagnosis;
+        console.log("calling Set Data");
+        setData(JSON.stringify(results));
 
     }
 
 
-    document.onmousedown = printCoordsAndRGB;
-
-    function printCoordsAndRGB(e){
-        var x = e.pageX;
-        var y = e.pageY;
-        var coords = "Mouse x = "+x+", mouse y = "+y;
-        console.log(coords);
-        if (pixels){
-            var px = getPixelRGB(pixels, x,y, imageWidth,imageHeight);
-            console.log(px);
-            console.log(rgbToHsl(px.r, px.g, px.b));
-        }
+    //testing sending stuff to native android
+    var setData = function(data) {
+            console.log("okay i got into the local SetData method");
+            Android.setData(data);
+            window.alert("Data sent to Native Android");
     }
 
+//************************** END SEND DATA TO SERVER **********************************
+
+//************************** GRAPH RESULTS ********************************************
+
+    //graphs the rgb values for the given laneIndex
+    function graph(laneIndex){
+        var lane=laneData[laneIndex];
+        var rgb=lane.rgbVector;
+        console.log("strip_length"+lane.strip_length);
+        console.log("samplingRate"+lane.samplingRate);
+        console.log("#samples: "+lane.numberOfSamples); //sometimes off by 1
+        console.log("rgbVector:"+rgb.length);
+        var xLabels=range(rgb.length);
+        var ctx = document.getElementById("graph").getContext("2d");
+
+        var r_data=[];
+        var g_data=[];
+        var b_data=[];
+
+        for (var colors in rgb){
+            r_data[colors]=rgb[colors].r;
+            g_data[colors]=rgb[colors].g;
+            b_data[colors]=rgb[colors].b;
+        }
+        //console.log(r_data);
+        var data = {
+            labels: xLabels,
+            datasets: [
+                {
+                    label: "r values",
+                    fillColor: "rgba(255,0,0,0.5)",
+                    strokeColor: "rgba(255,0,0,0.8)",
+                    highlightFill: "rgba(255,0,0,0.75)",
+                    highlightStroke: "rgba(255,0,0,1)",
+                    data: r_data
+                },
+                {
+                    label: "g values",
+                    fillColor: "rgba(0,255,0,0.5)",
+                    strokeColor: "rgba(0,255,0,0.8)",
+                    highlightFill: "rgba(0,255,0,0.75)",
+                    highlightStroke: "rgba(0,255,0,1)",
+                    data: g_data
+                },
+                {
+                    label: "b values",
+                    fillColor: "rgba(0,0,255,0.5)",
+                    strokeColor: "rgba(0,0,255,0.8)",
+                    highlightFill: "rgba(0,0,255,0.75)",
+                    highlightStroke: "rgba(0,0,255,1)",
+                    data: b_data
+                }
+            ]
+        };
+        $("#chartTitle").text("RGB values for each sampled band for lane#"+laneIndex);
+        var chart=new Chart(ctx).Bar(data,Chart.defaults);
+    };
+    //input event for graph textbox
+    function input(){
+        var laneNumber=$("#laneNo").val();
+        if (laneNumber>=0 || laneNumber<laneData.length){
+            graph(laneNumber);
+        } else{
+            alert("Please enter a number between 0 and "+laneData.length);
+        }
+    };
+
+//************************** END GRAPH RESULTS ****************************************
+
+//************************** DEBUGGING TOOLS ******************************************
     function getMousePos(canvas, evt) {
         var rect = canvas.getBoundingClientRect();
         var mouseX = evt.clientX - rect.left;
@@ -663,114 +851,16 @@
 
     canvas.addEventListener('mousemove', function(evt) {
         var mousePos = getMousePos(canvas, evt);
-        var message = 'Mouse position: ' + mousePos.x + ',' + mousePos.y +
-                "  :  Color: " + mousePos.r+ ',' +mousePos.g+ ',' +mousePos.b+
-                "  :  HSL: "+mousePos.h.toFixed(2)+ ',' +mousePos.s.toFixed(2)+ ',' +mousePos.l.toFixed(2);
-        $("span").text(message);
+        var message = 'Mouse position: ' + mousePos.x + ', ' + mousePos.y +
+                "  :  Color: " + mousePos.r+ ', ' +mousePos.g+ ', ' +mousePos.b+
+                "  :  HSL: "+mousePos.h.toFixed(2)+ ', ' +mousePos.s.toFixed(2)+ ', ' +mousePos.l.toFixed(2);
+        $("#mousePos").text(message);
     }, false);
 
-
-    //handling geolocation here
-    //current version only works on the click of a button, therefore, we have a button up there "Locate Me"
-    //Later: pass in diagnosis as argument to LocateMe <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<IMPORTANT
-    function LocateMe() { // works on LG but not on OPO
-        console.log("Running Locate Me!");
-
-      // Try HTML5 geolocation
-      if(navigator.geolocation) {
-        console.log("NAVIGATOR OK");
-        //console.log(navigator.geolocation.getCurrentPosition);
-        navigator.geolocation.getCurrentPosition(function(position) {
-            console.log("POS Running");
-            var pos = new google.maps.LatLng(position.coords.latitude,
-                                           position.coords.longitude);
-            console.log("INFO-WINDOW Running");
-            var infowindow = new google.maps.InfoWindow({
-                map: map,
-                position: pos,
-                content: 'Location found using HTML5.'
-            });
-
-            console.log("myLOCATION Running");
-            var mylocation = {lat: position.coords.latitude, lng:position.coords.longitude};
-
-            // call to function to send to DB
-            var Results = mylocation;
-            Results.diagnosis = "Ebola";
-            sendStuffToDB(Results);
-
-
-            //END this call here
-            console.log("This is my Location");
-            console.log(mylocation.lat);
-            console.log(mylocation.lng);
-
-            map.setCenter(pos);
-
-            }, function() {
-                console.log("HandleGeolocFailure within navigator Running");
-                handleGeolocationFailure(true);
-                },
-
-            { timeout:60000,
-              enableHighAccuracy:false
-          });
-
-        } else {
-            console.log("NAVIGATOR NOT OK");
-            // Browser doesn't support Geolocation
-            handleGeolocationFailure(false);
-        }
+    var troubleShoot=function(err){
+        Android.troubleShoot(err);
     }
-
-    //this function handles the case when geolocation cannot be found, then it centers the map component at a random location
-    function handleGeolocationFailure(errorFlag) {
-        console.log("Running handleGeolocationFailure");
-      if (errorFlag) {
-        console.log("Error: The Geolocation service failed");
-        var content = 'Error: The Geolocation service failed.';
-      } else {
-        console.log("Error: Browser does not support geolocation");
-        var content = 'Error: Your browser doesn\'t support geolocation.';
-      }
-
-      var options = {
-        map: map,
-        position: new google.maps.LatLng(100, 105),
-        content: content
-      };
-
-      var infowindow = new google.maps.InfoWindow(options);
-      map.setCenter(options.position);
-    }
-
-
-    // Flow works as follows: detect Rectangle, Rotate, Crop, removeMarkers, FindBlackBoxes
-//                        Analyse/ Diagnose (To be implemented), Find Location
-//                        (Find Location then calls sendStuffToDB);
-// Automatically do image processing, Diagnosis and location finding when called
-// this will be used to post stuff to the DB as well
-function sendStuffToDB(results){
-//results contains: lng, lat, diagnosis
-console.log("calling the diagnosis function");
-console.log(results.lat);
-console.log(results.lng);
-console.log(results.diagnosis);
-var url = "http://localhost:5000/results?"; //lat=10.1&lng=10&diagnosis=Ebola;
-//sends dummy data, not yet connected to website
-//location.href = url+ "lat="+results.lat+"&lng="+results.lng+"&diagnosis="+results.diagnosis;
-console.log("calling Set Data");
-setData('['+ results.lat+","+ results.lng+']');
-
-}
-
-
-//testing sending stuff to native android
-var setData = function(data) {
-console.log("okay i got into the local SetData method");
-Android.setData(data);
-window.alert("Data sent to Native Android");
-}
+//********************** END DEBUGGING TOOLS ******************************************
 
 </script>
 </body>

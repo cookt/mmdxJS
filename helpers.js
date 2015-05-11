@@ -111,7 +111,7 @@ var  getPixelPosition = function(x, y, imageWidth, imageHeight){
 var isRed = function(px){
     var  hsl = rgbToHsl(px.r, px.g,px.b);
     var hue = hsl.h * 360;
-    if (((hue<=360 && hue >=357) || (hue <=20)) && hsl.s > .7){
+    if (((hue<=360 && hue >=357) || (hue <=20)) && hsl.s > .7 && hsl.l>.1 && hsl.l<.85){
         return true
     }
     else{
@@ -139,16 +139,6 @@ var isBlackRGB = function(r,g,b){
     }
 };
 
-function isRedRGB(r,g,b){
-    var  hsl = rgbToHsl(r, g, b);
-    var hue = hsl.h * 360;
-    if (((hue<=360 && hue >=357) || (hue <=20)) && hsl.s > .7){
-        return true
-    }
-    else{
-        return false
-    }
-}
 
 /*
  * Calculates the angle ABC (in radians)
@@ -365,13 +355,5 @@ function colorRedBoxRGB() {
     context.putImageData(imgData, 0, 0);
 }
 
-var isRedOld = function(r,g,b){
-    if (r<=255 && r >=230 && b < 70 && g < 70){
-        return true
-    }
-    else{
-        return false
-    }
-};
 
 
