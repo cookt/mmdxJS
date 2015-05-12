@@ -3,7 +3,7 @@
     package="com.littledevices.mmdxonjs" >
 
     <uses-sdk
-        android:minSdkVersion="10"
+        android:minSdkVersion="17"
         android:targetSdkVersion="18" />
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />

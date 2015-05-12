@@ -19,7 +19,27 @@ import android.webkit.GeolocationPermissions;
 import android.webkit.WebChromeClient;
 //for geolocation - end
 
+import android.webkit.JavascriptInterface;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.*;
+import android.content.Context;
+import android.widget.Toast;
+
+
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+
+
+//import com.google.android.gms.common.api.GoogleApiClient;
+
+
 
 
 public class WebViewActivity extends Activity {
@@ -50,7 +70,81 @@ public class WebViewActivity extends Activity {
         }
     }
 
-    //*********************START*************************
+    //*********************Start: Send data to native android and post to Parse *************************
+    // Adding stuff to enable sending data - S
+    public class WebAppInterface {
+        Context mContext;
+
+        /** Instantiate the interface and set the context */
+        WebAppInterface(Context c) {
+            mContext = c;
+        }
+
+        /** Show a toast from the web page */
+        @JavascriptInterface
+        public void showToast(String toast) {
+            Toast.makeText(mContext, toast, Toast.LENGTH_SHORT).show();
+        }
+
+        /** Allow the JavaScript to pass some data in to us. */
+        @JavascriptInterface
+        public void setData(String newData) throws JSONException, UnsupportedEncodingException {
+            Log.d("checking if called", "MainActivity.setData()");
+            Log.d("checking if called", newData);
+//            JSONArray streamer = new JSONArray(newData);
+//            double[] data = new double[streamer.length()];
+//            for (int i = 0; i < streamer.length(); i++) {
+//                Double n = streamer.getDouble(i);
+//                data[i] = n;
+//            }
+
+            //handle sending stuff over to the database
+            this.postData(newData);
+        }
+
+        public void postData(String data) throws UnsupportedEncodingException {
+            // Create a new HttpClient and Post Header
+            HttpClient httpclient = new DefaultHttpClient();
+
+            //String formattedData = "lat="+ data[0]+ "&lng="+ data[1] +"&diagnosis=Ebola";
+            //String toPost = "http://mmdx.parseapp.com/send_result?"+ formattedData;
+            String toPost = "http://mmdx.parseapp.com/send_data";
+            HttpPost httppost = new HttpPost(toPost);
+
+            //Extract JSON we just created
+            JSONObject object = null;
+            try {
+                object = new JSONObject(data);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            String message = object.toString();
+            Log.d("checking if called message", message);
+            httppost.setEntity(new StringEntity(message, "UTF8"));
+            httppost.setHeader("Content-type", "application/json");
+
+            try {
+
+                // Execute HTTP Post Request
+                HttpResponse response = httpclient.execute(httppost);
+                
+            } catch (ClientProtocolException e) {
+                // TODO Auto-generated catch block
+                Log.i("posDataError", "client Protocol exception");
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                Log.i("posDataError", "IOException");
+            }
+        } 
+
+
+    }
+
+    //*********************END: Send data to native android and post to Parse **********************
+
+
+    //*********************START: Allowing Geolocation in JavaScript ******************************
     // ADDING GEOLOCATION SUPPORT, automatically grant viewing permissions -S
      /**
      * WebChromeClient subclass handles UI-related calls
@@ -65,7 +159,7 @@ public class WebViewActivity extends Activity {
             callback.invoke(origin, true, false);
         }
     }
-    //*********************END*************************
+    //*********************END: Allowing Geolocation in JavaScript******************************
 
     // Pass picture path to html file
     @Override
@@ -91,16 +185,30 @@ public class WebViewActivity extends Activity {
         //geolocation start
         mWebView.getSettings().setGeolocationEnabled(true);  // enabling geolocation -s
         mWebView.getSettings().setBuiltInZoomControls(true); //enabling zoom -s
+
+        mWebView.getSettings().setLoadWithOverviewMode(true);
+        mWebView.getSettings().setUseWideViewPort(true);
+
         mWebView.getSettings().setAppCacheEnabled(true);
         mWebView.getSettings().setDatabaseEnabled(true);
         mWebView.getSettings().setDomStorageEnabled(true);
+        mWebView.addJavascriptInterface(new WebAppInterface(this), "Android");
 
         mWebView.setWebChromeClient(new GeoWebChromeClient()); //setting chrome client above
         //geolocation end
         mWebView.loadUrl("file:///android_asset/www/main.html");
 
-
+        // START: working on native android geolocation -s (experimental)
+//        protected synchronized void buildGoogleApiClient() {
+//        mGoogleApiClient = new GoogleApiClient.Builder(this)
+//            .addConnectionCallbacks(this)
+//            .addOnConnectionFailedListener(this)
+//            .addApi(LocationServices.API)
+//            .build();
+//        };
+        // END: working on native android geolocation
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -124,10 +232,27 @@ public class WebViewActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+    //to DEBUG?
     public void backToMain(View view){
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
     }
+
+    //********************* START: Exploring Native android Geolocation *************************
+    // links: https://developer.android.com/training/location/retrieve-current.html
+    // UNTESTED
+//    @Override
+//    public void onConnected(Bundle connectionHint) {
+//        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+//                mGoogleApiClient);
+//        if (mLastLocation != null) {
+//            mLatitudeText.setText(String.valueOf(mLastLocation.getLatitude()));
+//            mLongitudeText.setText(String.valueOf(mLastLocation.getLongitude()));
+//            Log.d("Latitude form Android", String.valueOf(mLastLocation.getLatitude())));
+//            Log.d("LOngitude form Android", String.valueOf(mLastLocation.getLongitude())));
+//        }
+//    }
+    //********************* END: Exploring Native android Geolocation ***************************
 
 }
 
