@@ -886,10 +886,10 @@ function analyze (){
     function graph(laneIndex){
         var lane=laneData[laneIndex];
         var rgb=lane.rgbVector;
-        console.log("strip_length"+lane.strip_length);
-        console.log("samplingRate"+lane.samplingRate);
-        console.log("#samples: "+lane.numberOfSamples); //sometimes off by 1
-        console.log("rgbVector:"+rgb.length);
+        //console.log("strip_length"+lane.strip_length);
+        //console.log("samplingRate"+lane.samplingRate);
+        //console.log("#samples: "+lane.numberOfSamples); //sometimes off
+        //console.log("rgbVector:"+rgb.length);
         var xLabels=range(rgb.length);
         var ctx = document.getElementById("graph").getContext("2d");
         var r_data=[];
@@ -980,13 +980,14 @@ function analyze (){
     function findRedRegions(laneSignal){
         var regions=[];
         var region={};
-        region.parentLane=laneSignal;
+        region.parentLaneLen=laneSignal.rgbVector.length;
         var rgbVector=laneSignal.rgbVector;
+        region.rgbVector=[];
         var foundRegionStart=false;
         for (var i=0; i<rgbVector.length; i++){
-            console.log(isRed(rgbVector[i]));
+            console.log(isRedDiff(rgbVector[i],20));
 
-            if (isRed(rgbVector[i])){
+            if (isRedDiff(rgbVector[i],20)){
                 if (!foundRegionStart){
                     foundRegionStart=true;
                     region.startIndex=i;
@@ -1006,7 +1007,9 @@ function analyze (){
     }
     function generateDiagnosis(){
         var tableData=[];
-        for (vari=0; i<laneData.length; i++){
+        var disease="A DISEASE TO DEFINE FROM TEST MAPPING";
+        for (var i=0; i<laneData.length; i++){
+            console.log(i+"-------------------");
             tableData[i]=findRedRegions(laneData[i]);
             console.log(tableData);
         }
@@ -1032,7 +1035,7 @@ function analyze (){
                     <td>Positive</td>\
                 </tr>");
             } else if (tableData[i].length==1){
-                if(tableData[i].endIndex>tableData[i].parentLane.rgbVector.length/2){
+                if(tableData[i].endIndex>tableData[i].parentLaneLen/2){
                     $("#resultsTable").append(
                     "<tr>\
                         <td>"+i+"</td>\
@@ -1049,7 +1052,7 @@ function analyze (){
                 }
             }
         }
-        $("#table-container").append("<p>Diagnosis for this test is: SOMETHING TO DEFINE</p>");
+        $("#table-container").append("<p>Diagnosis for this test is:"+disease+"</p>");
     }
     </script>
 </body>
