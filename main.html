@@ -43,7 +43,7 @@
         </div>
 
         <div id ="controls" class="btn-group-vertical row" role="group">
-            <button type="button" class="btn btn-default" onclick = "getRuntime(detect)"> Detect rectange </button>
+            <button type="button" class="btn btn-default" onclick = "getRuntime(detect)"> Detect rectangle </button>
             <button type="button" class="btn btn-default" onclick = "getRuntime(crop)"> Crop </button>
             <button type="button" class="btn btn-default" onclick = "getRuntime(rotate)"> Rotate </button>
             <button type="button" class="btn btn-default" onclick = "getRuntime(removeMarkers)"> Remove markers </button>
@@ -192,6 +192,148 @@ function analyze (){
     DETECTION:
     Uses tracking.js to find markers (color details are specified above)
     Finds a rectangle around a detected object
+=======
+
+    <script>
+
+        //********************************** GEOLOCATION SETUP **********************************
+        // var mapOptions = {
+        //     zoom: 1
+        //   };
+        // var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+        // var DisplayRandomMap = function(){
+        //     var options = {
+        //         map: map,
+        //         position: new google.maps.LatLng(60, 105),
+        //         content: "Map Initialized"
+        //       };
+        //     var infowindow = new google.maps.InfoWindow(options);
+        //     map.setCenter(options.position);
+        // };
+        //********************************** END GEOLOCATION SETUP **********************************
+
+        //********************************** CANVAS SETUP **********************************
+
+        var canvas = document.getElementById('canvas');
+        var context = canvas.getContext('2d');
+        var imageObj = new Image();
+        var imageHeight, imageWidth;
+        var imageData, pixels;
+
+        //variables for the tracker.js
+        var tracked_rect;
+        var markerRectangle;
+
+        //Test images in base64
+        var mmdx_image_normal = getTestImageNormal();
+        var mmdx_image_tilted_right = getTestImageRotatedRight();
+        var mmdx_image_tilted_left = getTestImageRotatedLeft();
+        var mmdx_image_tilted_left2 = getTestImageRotatedLeft2();
+
+
+        // USED IN ANDROID
+
+        // function loadImage(image_base64){
+        //     imageObj = new Image();
+        //     mmdx_image_app = image_base64;
+        //     imageObj.src = image_base64;
+        //     //console.log("Image from android");
+        //     //console.log(image_base64.substring(0, 50));
+        //     imageObj.onload = function() {
+        //         imageHeight = imageObj.height;
+        //         imageWidth = imageObj.width;
+        //         //canvas.height = imageHeight;
+        //         //canvas.width = imageWidth;
+        //         //context.drawImage(imageObj,0, 0);
+        //         canvas.height = 800*(imageHeight/imageWidth);
+        //         canvas.width = 800;
+        //         /// step 1
+        //         var oc = document.createElement('canvas'),
+        //                 octx = oc.getContext('2d');
+        //         oc.width = imageWidth * 0.5;
+        //         oc.height = imageHeight * 0.5;
+        //         octx.drawImage(imageObj, 0, 0, oc.width, oc.height);
+        //         /// step 2
+        //         octx.drawImage(oc, 0, 0, oc.width * 0.5, oc.height * 0.5);
+
+        //         context.drawImage(oc, 0, 0, oc.width * 0.5, oc.height * 0.5,
+        //                 0, 0, canvas.width, canvas.height);
+        //     }
+        // }
+
+
+        //************ COMMENT OUT INSIDE ANDROID ***************
+        //Set test image
+        var mmdx_image = mmdx_image_normal;
+        //var mmdx_image = getImageRotated10();
+
+        //"https://dl.dropboxusercontent.com/s/npfv94ktix8fqrz/20150510_171950.jpg";
+        //"https://dl.dropboxusercontent.com/s/lsebdpc9rdo42li/1431378655452.jpg"; //native tracking works with isRed in this file
+        //"https://dl.dropboxusercontent.com/s/8lkfdh28ajgxkuc/1431378100503.jpg";//native tracking works
+        //"https://dl.dropboxusercontent.com/s/d32lmuakp8q0f9d/1431284418461.jpg"; //didn't work carton markers
+        //"https://dl.dropboxusercontent.com/s/n2o5pft318g74vq/1431292734919.jpg";
+
+
+        var image_goodLighting = "https://dl.dropboxusercontent.com/s/jpkfzol1fxylmbl/2015-05-11%2014.04.10.jpg";
+        var image_rotated_with_strips = "https://dl.dropboxusercontent.com/s/e0h29cc7k8vwp8n/rotatedRightColor.png";
+        var image_shade = "https://dl.dropboxusercontent.com/s/a75cdy8umi5l178/2015-05-11%2014.49.32.jpg";
+        var image_flash = "https://dl.dropboxusercontent.com/s/8zxumw5wnxmcc6b/2015-05-11%2014.57.54.jpg";
+
+        // FAILS
+        var image_original = "https://dl.dropboxusercontent.com/s/gndxrbigfy2r4zv/originalRecolored.png";
+        var image_redBackground = "https://dl.dropboxusercontent.com/s/47zpza9q81s2evp/2015-05-11%2014.59.09.jpg";
+        var image_goodLightingRotated= "https://dl.dropboxusercontent.com/s/oru5sae9bbzt7op/2015-05-11%2014.04.06.jpg?dl=0";
+
+        imageObj.src = "https://dl.dropboxusercontent.com/s/n2o5pft318g74vq/1431292734919.jpg";
+        imageObj.crossOrigin = "anonymous"; //just in case
+
+        //draw image to canvas
+        imageObj.onload = function() {
+            var resolution = .7;
+            imageHeight = imageObj.height;
+            imageWidth = imageObj.width;
+            canvas.height = 800*(imageHeight/imageWidth);
+                     canvas.width = 800;
+                     /// step 1
+                     var oc = document.createElement('canvas'),
+                             octx = oc.getContext('2d');
+                     oc.width = imageWidth * resolution;
+                     oc.height = imageHeight * resolution;
+                     octx.drawImage(imageObj, 0, 0, oc.width, oc.height);
+                    /// step 2
+                     octx.drawImage(oc, 0, 0, oc.width * resolution, oc.height * resolution);
+
+                     context.drawImage(oc, 0, 0, oc.width * resolution, oc.height * resolution,
+                             0, 0, canvas.width, canvas.height);
+        };
+
+        //function loadImage(image_base64){
+        //    imageObj.src = image_base64
+        //}
+        //******** END COMMENT OUT INSIDE ANDROID ***************
+
+        //array that has the positional data of the lanes to be processed
+        var markerBoxes=[];
+        //the array of signal objects of the processed lanes
+        var laneData=[];
+        //*****************************************************************************************************
+        //*****************************************************************************************************
+        //*********************************** YOU CAN COPY CODE AS FROM HERE INTO THE INNER ONE****************
+        //*****************************************************************************************************
+        //*****************************************************************************************************
+        //Register color tracking.js uses to identify markers
+        tracking.ColorTracker.registerColor('marker', function(r, g, b) {
+            return isRed({r:r,g:g,b:b});
+
+        });
+        //********************************** END CANVAS SETUP **********************************
+        //********************************** RECOGNITION: MARKER DETECTION *********************
+
+        /**
+         DETECTION:
+         Uses tracking.js to find markers (color details are specified above)
+         Finds a rectangle around a detected object
+>>>>>>> 4ffd84f342b6bb07f3d9282d4f4e947d6766d0d7
          (tracker returns "rect" object {x: value, y:value, height:value, width:value, color:value})
          If not rotated, will draw the abovementioned rectange and use its corners
          If rotated, find the intersection of the actual rectange with the abovemention rectangle
@@ -842,9 +984,9 @@ function analyze (){
         var rgbVector=laneSignal.rgbVector;
         var foundRegionStart=false;
         for (var i=0; i<rgbVector.length; i++){
-            console.log(isRedDiff(rgbVector[i]));
+            console.log(isRed(rgbVector[i]));
 
-            if (isRedDiff(rgbVector[i])){
+            if (isRed(rgbVector[i])){
                 if (!foundRegionStart){
                     foundRegionStart=true;
                     region.startIndex=i;
@@ -866,11 +1008,12 @@ function analyze (){
         var tableData=[];
         for (vari=0; i<laneData.length; i++){
             tableData[i]=findRedRegions(laneData[i]);
+            console.log(tableData);
         }
         $("#resultsTable").append("<tr id=tablehead></tr>");
         $("#tablehead").append("<th>Lane #</th>");
         for (var i=0; i<nMarkerRegions;i++){
-            $("#tablehead").append("<th>Region #"+(i+1)+"result</th>");
+            $("#tablehead").append("<th>Region #"+(i+1)+" result</th>");
         }
         for(var i=0; i<tableData.length;i++){
             if (tableData[i].length==0){

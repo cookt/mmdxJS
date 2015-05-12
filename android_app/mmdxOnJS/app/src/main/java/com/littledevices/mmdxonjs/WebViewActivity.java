@@ -29,6 +29,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.*;
 import android.content.Context;
+import android.widget.Button;
 import android.widget.Toast;
 
 
@@ -233,9 +234,12 @@ public class WebViewActivity extends Activity {
     }
 
     //to DEBUG?
+
     public void backToMain(View view){
-        Intent intent = new Intent(this, MainActivity.class);
-        startActivity(intent);
+          finish();
+//        Intent intent = new Intent(WebViewActivity.this, MainActivity.class);
+//        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//        startActivity(intent);
     }
 
     //********************* START: Exploring Native android Geolocation *************************
