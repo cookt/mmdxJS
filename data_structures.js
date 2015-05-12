@@ -49,9 +49,9 @@ Rectangle.prototype.findTopCorner = function(){
 	var b = this.corners[1];
 	var c = this.corners[2];
 	var d = this.corners[3];
-    
+    var ys = [a.y, b.y, c.y, d.y];
     //highest element
-    var y = [a.y, b.y, c.y, d.y].minElement();
+    var y = ys.minElement();
     if (a.y==y){
         return a;
     }
@@ -81,7 +81,8 @@ Rectangle.prototype.findBottomCorner = function(){
 	var d = this.corners[3];
     
     //highest element
-    var y = [a.y, b.y, c.y, d.y].maxElement();
+    var ys = [a.y, b.y, c.y, d.y];
+    var y = ys.maxElement();
     if (a.y==y){
         return a;
     }
@@ -111,7 +112,8 @@ Rectangle.prototype.findRightCorner = function(){
     var d = this.corners[3];
     
     //highest element
-    var x = [a.x, b.x, c.x, d.x].maxElement();
+    var xs = [a.x, b.x, c.x, d.x];
+    var x = xs.maxElement();
     if (a.x==x){
         return a;
     }
@@ -141,7 +143,8 @@ Rectangle.prototype.findLeftCorner = function(){
     var d = this.corners[3];
     
     //highest element
-    var x = [a.x, b.x, c.x, d.x].minElement();
+    var xs = [a.x, b.x, c.x, d.x];
+    var x = xs.minElement();
     if (a.x==x){
         return a;
     }
@@ -234,4 +237,26 @@ Rectangle.prototype.findAngleOfRotation = function(){
         return new Angle(2*Math.PI-angle1, direction);
     }
     
+}
+
+Array.prototype.minElement = function(){
+    var n = this.length;
+    var minElement = this[0];
+    for (var i = 0; i< n; i++){
+        if (this[i]<= minElement){
+            minElement = this[i];
+        }
+    }
+    return minElement;
+}
+
+Array.prototype.maxElement = function(){
+    var n = this.length;
+    var maxElement = this[0];
+    for (var i = 0; i< n; i++){
+        if (this[i]>= maxElement){
+            maxElement = this[i];
+        }
+    }
+    return maxElement;
 }
