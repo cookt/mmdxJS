@@ -21,8 +21,9 @@
     <script type="text/javascript" src="test_images/test_images_rotated.js"></script>
 
     <!-- Own methods and helpers -->
-    <script type="text/javascript" src="javascripts/helpers.js"></script>
-    <script type="text/javascript" src="javascripts/data_structures.js"></script>
+    <script type="text/javascript" src="helpers.js"></script>
+    <script type="text/javascript" src="data_structures.js"></script>
+    <script type="text/javascript" src="utils.js"></script>
 
     <!-- Google API for Geolocation-->
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script>
@@ -131,7 +132,7 @@
     //var mmdx_image = getImageRotated10();
 
     
-    imageObj.src = "https://dl.dropboxusercontent.com/s/n2o5pft318g74vq/1431292734919.jpg";
+    imageObj.src = getImageRotated40();
     //"https://dl.dropboxusercontent.com/s/npfv94ktix8fqrz/20150510_171950.jpg";
     
     //"https://dl.dropboxusercontent.com/s/lsebdpc9rdo42li/1431378655452.jpg"; //native tracking works with isRed in this file
@@ -159,65 +160,7 @@
 //******** END COMMENT OUT INSIDE ANDROID ***************
 
 
-//******** stuff form helpers ********
-var HUE_BOTTOM_LOWER_BOUND = 0;
-var HUE_BOTTOM_UPPER_BOUND = 10;
-var HUE_TOP_LOWER_BOUND = 320;
-var HUE_TOP_UPPER_BOUND = 360;
 
-var SATURATION_LOWER_BOUND = 0.4;
-var SATURATION_UPPER_BOUND = 1.0;
-
-var LIGHTNESS_LOWER_BOUND = 0.1;
-var LIGHTNESS_UPPER_BOUND = 0.80;
-
-var isRed = function(px){
-    var  hsl = rgbToHsl(px.r, px.g,px.b);
-    var hue = hsl.h * 360;
-    if (((hue<=HUE_TOP_UPPER_BOUND && hue >=HUE_TOP_LOWER_BOUND) ||
-    (hue >=HUE_BOTTOM_LOWER_BOUND && hue <=HUE_BOTTOM_UPPER_BOUND)) &&
-    (hsl.s > SATURATION_LOWER_BOUND && hsl.s <= SATURATION_UPPER_BOUND) &&
-    (hsl.l>LIGHTNESS_LOWER_BOUND && hsl.l<LIGHTNESS_UPPER_BOUND)){
-        return true
-    }
-    else{
-        return false
-    }
-};
-
-function rgbToHsl(r, g, b) {
-    r /= 255, g /= 255, b /= 255;
-    var max = Math.max(r, g, b),
-            min = Math.min(r, g, b);
-    var h, s, l = (max + min) / 2;
-
-    if (max == min) {
-        h = s = 0; // achromatic
-    } else {
-        var d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-        switch (max) {
-            case r:
-                h = (g - b) / d + (g < b ? 6 : 0);
-                break;
-            case g:
-                h = (b - r) / d + 2;
-                break;
-            case b:
-                h = (r - g) / d + 4;
-                break;
-        }
-        h /= 6;
-    }
-
-    return ({
-        h: h,
-        s: s,
-        l: l,
-    });
-}
-
-//****************
 
 
 
@@ -479,7 +422,7 @@ function rgbToHsl(r, g, b) {
         var h = tracked_rect.height;
         var c1, c2, c3, c4; //corners
 
-        var radius = w/2;
+        var radius = Math.min(w,h);
         
         //upper left (x, y)
         for (var iter = 1; iter<radius; iter++){

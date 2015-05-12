@@ -1,4 +1,4 @@
-$(document).ready(function(){
+
 //CONSTANTS used in isRed:
 
 var HUE_BOTTOM_LOWER_BOUND = 0;
@@ -398,7 +398,6 @@ Array.prototype.maxElement = function(){
     return maxElement;
 }
 
-});
 
 
 

@@ -2,9 +2,11 @@
 <html>
 <head>
     <!-- Stylesheets -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
     <link rel="stylesheet" href="stylesheets/style.css">
     <link rel="stylesheet" href="resources/bootstrap.min.css">
     <link rel="stylsesheet" href="resources/bootstrap-theme.min.css">
+
 
     
     <!-- External resources and libraries -->
@@ -19,8 +21,9 @@
     <script type="text/javascript" src="test_images/test_images_rotated.js"></script>
 
     <!-- Own methods and helpers -->
-    <script type="text/javascript" src="javascripts/helpers.js"></script>
-    <script type="text/javascript" src="javascripts/data_structures.js"></script>
+    <script type="text/javascript" src="helpers.js"></script>
+    <script type="text/javascript" src="data_structures.js"></script>
+    <script type="text/javascript" src="utils.js"></script>
 
     <!-- Google API for Geolocation-->
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script>
@@ -29,8 +32,7 @@
     
 
 </head>
-<!--<body onload="DisplayRandomMap()"> -->
-<body>
+<body onload="DisplayRandomMap()">
 <div class="container-fluid">
     <div class="row">
         <div class="canvas-container">
@@ -59,19 +61,19 @@
 <script>
     
 //********************************** GEOLOCATION SETUP **********************************
-    // var mapOptions = {
-    //     zoom: 1
-    //   };
-    // var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
-    // var DisplayRandomMap = function(){
-    //     var options = {
-    //         map: map,
-    //         position: new google.maps.LatLng(60, 105),
-    //         content: "Map Initialized"
-    //       };
-    //     var infowindow = new google.maps.InfoWindow(options);
-    //     map.setCenter(options.position);
-    // };
+    var mapOptions = {
+        zoom: 1
+      };
+    var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+    var DisplayRandomMap = function(){
+        var options = {
+            map: map,
+            position: new google.maps.LatLng(60, 105),
+            content: "Map Initialized"
+          };
+        var infowindow = new google.maps.InfoWindow(options);
+        map.setCenter(options.position);
+    };
 //********************************** END GEOLOCATION SETUP **********************************
 
 //********************************** CANVAS SETUP **********************************
@@ -125,27 +127,41 @@
 
 
 //************ COMMENT OUT INSIDE ANDROID ***************
-
     //Set test image
-    //var mmdx_image = mmdx_image_normal;
-    //var mmdx_image = getImageRotated10();
+    // var mmdx_image = mmdx_image_normal;
+    // //var mmdx_image = getImageRotated10();
 
-    //imageObj.src = mmdx_image_tilted_left;
-    //imageObj.crossOrigin = "anonymous"; //just in case
+    
+    // imageObj.src = getImageRotated40();
+    // //"https://dl.dropboxusercontent.com/s/npfv94ktix8fqrz/20150510_171950.jpg";
+    
+    // //"https://dl.dropboxusercontent.com/s/lsebdpc9rdo42li/1431378655452.jpg"; //native tracking works with isRed in this file
+
+    // //"https://dl.dropboxusercontent.com/s/8lkfdh28ajgxkuc/1431378100503.jpg";//native tracking works
+    // //"https://dl.dropboxusercontent.com/s/d32lmuakp8q0f9d/1431284418461.jpg"; //didn't work carton markers
+    // //"https://dl.dropboxusercontent.com/s/n2o5pft318g74vq/1431292734919.jpg";
+    
+     
+
+    // imageObj.crossOrigin = "anonymous"; //just in case
 
 
-    //draw image to canvas
-    //imageObj.onload = function() {
+    // //draw image to canvas
+    // imageObj.onload = function() {
     //    imageHeight = imageObj.height;
     //    imageWidth = imageObj.width;
     //    canvas.height = imageHeight;
     //    canvas.width = imageWidth;
     //    context.drawImage(imageObj,0, 0);
-    //};
-    //function loadImage(image_base64){
+    // };
+    // function loadImage(image_base64){
     //    imageObj.src = image_base64
-    //}
+    // }
 //******** END COMMENT OUT INSIDE ANDROID ***************
+
+
+
+
 
 
     //array that has the positional data of the lanes to be processed
@@ -190,6 +206,7 @@
         var tracker = new tracking.ColorTracker(['marker']);
         tracker.on('track', function(event) {
             event.data.forEach(function(rect) {
+                console.log("tracking found smth");
                 tracked_rect = rect;
                 var x = rect.x;
                 var y = rect.y;
@@ -200,11 +217,11 @@
 
                 var rotated = checkIfRotated();
                 markerRectangle = new Rectangle(corners, rotated);
-                drawRectangle(markerRectangle.getCorners());
+                drawRectangle(markerRectangle.getCorners(), "blue");
                 if (markerRectangle.isRotated()){
-                    findCorners();
+                    findCorners2();
                 }
-                drawRectangle(markerRectangle.getCorners());
+                drawRectangle(markerRectangle.getCorners(), "yellow");
             });
         });
         tracking.track('#canvas', tracker); //start tracking
@@ -256,42 +273,53 @@
     tracker found a correct rectangle
     */
     var checkIfRotated = function(){
-        var threshhold = .1;  //NEED TO ADJUST/TEST
+        console.log("checkIfRotated");
+        var threshhold = .4;  //NEED TO ADJUST/TEST
         var x = tracked_rect.x;
         var y = tracked_rect.y;
         var w = tracked_rect.width;
         var h = tracked_rect.height;
-        var numPoints = 2*(w+h);
+        var numPoints = 10*(w+(h-10));
         var countRed = 0;
         //move along the top edge
-        for (var i = 0; i<w; i++){
-            var px = getPixelRGB(pixels, x+i, y, imageWidth, imageWidth);
-            if (isRed(px)){
-                countRed++
+        for (var p=0; p<5;p++){
+            for (var i = 0; i<w; i++){
+                var px = getPixelRGB(pixels, x+i, y+p, imageWidth, imageWidth);
+                if (isRed(px)){
+                    countRed++
+                }
             }
         }
         //bottom edge
-        for (var i = 0; i<w; i++){
-            var px = getPixelRGB(pixels, x+i, y+h, imageWidth, imageWidth);
-            if (isRed(px)){
-                countRed++
+        for (var p=0; p<5;p++){
+            for (var i = 0; i<w; i++){
+                var px = getPixelRGB(pixels, x+i, y+h-p, imageWidth, imageWidth);
+                if (isRed(px)){
+                    countRed++
+                }
             }
         }
 
         //left edge
-        for (var i = 0; i<h; i++){
-            var px = getPixelRGB(pixels, x, y+i, imageWidth, imageWidth);
-            if (isRed(px)){
-                countRed++
+        for (var p=0; p<5;p++){
+            for (var i = 5; i<h-5; i++){
+                var px = getPixelRGB(pixels, x+p, y+i, imageWidth, imageWidth);
+                if (isRed(px)){
+                    countRed++
+                }
             }
         }
         //right edge
-        for (var i = 0; i<h; i++){
-            var px = getPixelRGB(pixels, x+w, y+i, imageWidth, imageWidth);
-            if (isRed(px)){
-                countRed++
+        for (var p=0; p<5;p++){
+            for (var i = 5; i<h-5; i++){
+                var px = getPixelRGB(pixels, x+w-p, y+i, imageWidth, imageWidth);
+                if (isRed(px)){
+                    countRed++
+                }
             }
         }
+        console.log("ratio");
+        console.log(countRed/numPoints);
         if (countRed/numPoints < threshhold){
             return true;
         }
@@ -304,6 +332,7 @@
     If oldCheckIfRotated returns true, finds the corners of the rotated markers
     */
     var findCorners = function(){
+        console.log("Finding corners");
         var x = tracked_rect.x;
         var y = tracked_rect.y;
         var w = tracked_rect.width;
@@ -384,12 +413,113 @@
 
     };
 
-    var drawRectangle = function(points){
+    var findCorners2 = function(){
+
+        console.log("Finding corners 2");
+        var x = tracked_rect.x;
+        var y = tracked_rect.y;
+        var w = tracked_rect.width;
+        var h = tracked_rect.height;
+        var c1, c2, c3, c4; //corners
+
+        var radius = Math.min(w,h);
+        
+        //upper left (x, y)
+        for (var iter = 1; iter<radius; iter++){
+            var i = iter;
+            var j = 0;
+            var check=true;
+            while (i>=0 && check){
+                var px = getPixelRGB(pixels, x+i, y+j, imageWidth, imageWidth);
+                if (isRed(px)){
+                    c1 = new Point(x+i, y+j);
+                    console.log("C1");
+                    console.log(c1);
+                    check=false;
+                }
+                i--;
+                j++;    
+            }
+            if (!check){
+                break;
+            }             
+        }
+        //upper right (x+w, y)
+        for (var iter = 1; iter<radius; iter++){
+            var i = iter;
+            var j = 0;
+            var check=true;
+            while (i>=0 && check){
+                var px = getPixelRGB(pixels, x+w-i, y+j, imageWidth, imageWidth);
+                if (isRed(px)){
+                    c3 = new Point(x+w-i, y+j);
+                    console.log("C3");
+                    console.log(c3);
+                    check=false;
+                }
+                i--;
+                j++;    
+            }
+            if (!check){
+                break;
+            }             
+        }
+
+        //lower left (x, y+h)
+        for (var iter = 1; iter<radius; iter++){
+            var i = iter;
+            var j = 0;
+            var check=true;
+            while (i>=0 && check){
+                var px = getPixelRGB(pixels, x+i, y+h-j, imageWidth, imageWidth);
+                if (isRed(px)){
+                    c4 = new Point(x+i, y+h-j);
+                    console.log("C4");
+                    console.log(c4);
+                    check=false;
+                }
+                i--;
+                j++;    
+            }
+            if (!check){
+                break;
+            }             
+        }
+
+        //lower right (x+w, y+h)
+        for (var iter = 1; iter<radius; iter++){
+            var i = iter;
+            var j = 0;
+            var check=true;
+            while (i>=0 && check){
+                var px = getPixelRGB(pixels, x+w-i, y+h-j, imageWidth, imageWidth);
+                if (isRed(px)){
+                    c2 = new Point(x+w-i, y+h-j);
+                    console.log("C2");
+                    console.log(c2);
+                    check=false;
+                }
+                i--;
+                j++;    
+            }
+            if (!check){
+                break;
+            }             
+        }
+
+
+
+        markerRectangle.setCorners([c1,c2,c3,c4]);
+
+    };
+
+    var drawRectangle = function(points, color){
         var c1 = points[0];
         var c2 = points[1];
         var c3 = points[2];
         var c4 = points[3];
         console.log("drawCorners:",c1,c2,c3,c4 );
+        context.strokeStyle = color;
         context.beginPath();
         context.beginPath();
         context.moveTo(c1.x,c1.y);
@@ -690,12 +820,12 @@
             console.log("POS Running");
             var pos = new google.maps.LatLng(position.coords.latitude,
                                            position.coords.longitude);
-            //console.log("INFO-WINDOW Running");
-            // var infowindow = new google.maps.InfoWindow({
-            //     map: map,
-            //     position: pos,
-            //     content: 'Location found using HTML5.'
-            // });
+            console.log("INFO-WINDOW Running");
+            var infowindow = new google.maps.InfoWindow({
+                map: map,
+                position: pos,
+                content: 'Location found using HTML5.'
+            });
             console.log("myLOCATION Running");
             var mylocation = {lat: position.coords.latitude, lng:position.coords.longitude};
             // call to function to send to DB
@@ -706,7 +836,7 @@
             console.log("This is my Location");
             console.log(mylocation.lat);
             console.log(mylocation.lng);
-            //map.setCenter(pos);
+            map.setCenter(pos);
             }, function() {
                 console.log("HandleGeolocFailure within navigator Running");
                 handleGeolocationFailure(true);
@@ -730,13 +860,13 @@
         console.log("Error: Browser does not support geolocation");
         var content = 'Error: Your browser doesn\'t support geolocation.';
       }
-      // var options = {
-      //   map: map,
-      //   position: new google.maps.LatLng(100, 105),
-      //   content: content
-      // };
-      // var infowindow = new google.maps.InfoWindow(options);
-      //map.setCenter(options.position);
+      var options = {
+        map: map,
+        position: new google.maps.LatLng(100, 105),
+        content: content
+      };
+      var infowindow = new google.maps.InfoWindow(options);
+      map.setCenter(options.position);
   }
 
 //************************** END GEOLOCATION ******************************************
@@ -863,7 +993,7 @@
         var mousePos = getMousePos(canvas, evt);
         var message = 'Mouse position: ' + mousePos.x + ', ' + mousePos.y +
                 "  :  Color: " + mousePos.r+ ', ' +mousePos.g+ ', ' +mousePos.b+
-                "  :  HSL: "+mousePos.h.toFixed(2)+ ', ' +mousePos.s.toFixed(2)+ ', ' +mousePos.l.toFixed(2);
+                "  :  HSL: "+mousePos.h.toFixed(2)+ ', ' +mousePos.s.toFixed(2)+ ', ' +mousePos.l.toFixed(2)+" isRed: "+isRed({r:mousePos.r, g:mousePos.g, b:mousePos.b});
         $("#mousePos").text(message);
     }, false);
 
