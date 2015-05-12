@@ -1,4 +1,19 @@
 
+//CONSTANTS used in isRed:
+
+var HUE_BOTTOM_LOWER_BOUND = 0;
+var HUE_BOTTOM_UPPER_BOUND = 10;
+var HUE_TOP_LOWER_BOUND = 320;
+var HUE_TOP_UPPER_BOUND = 360;
+
+var SATURATION_LOWER_BOUND = 0.3;
+var SATURATION_UPPER_BOUND = 1.0;
+
+var LIGHTNESS_LOWER_BOUND = 0.1;
+var LIGHTNESS_UPPER_BOUND = 0.80;
+
+
+
 // HELPERS
 var getPixelRGB = function(pixels, x,y, imageWidth, imageHeight){
     var red = pixels[y*imageWidth*4+x*4];
@@ -47,7 +62,7 @@ var isAreaBlack = function(x,y, areaSize, pixels, imageWidth, imageHeight){
 function rgbToHsl(r, g, b) {
     r /= 255, g /= 255, b /= 255;
     var max = Math.max(r, g, b),
-            min = Math.min(r, g, b);
+        min = Math.min(r, g, b);
     var h, s, l = (max + min) / 2;
 
     if (max == min) {
@@ -111,7 +126,10 @@ var  getPixelPosition = function(x, y, imageWidth, imageHeight){
 var isRed = function(px){
     var  hsl = rgbToHsl(px.r, px.g,px.b);
     var hue = hsl.h * 360;
-    if (((hue<=360 && hue >=320) || (hue <=10)) && hsl.s > .3 && hsl.l>.1 && hsl.l<.85){
+    if (((hue<=HUE_TOP_UPPER_BOUND && hue >=HUE_TOP_LOWER_BOUND) ||
+        (hue >=HUE_BOTTOM_LOWER_BOUND && hue <=HUE_BOTTOM_UPPER_BOUND)) &&
+        (hsl.s > SATURATION_LOWER_BOUND && hsl.s <= SATURATION_UPPER_BOUND) &&
+        (hsl.l>LIGHTNESS_LOWER_BOUND && hsl.l<LIGHTNESS_UPPER_BOUND)){
         return true
     }
     else{
@@ -173,7 +191,7 @@ function findClosest(A,listB, error){
             }
         }
     }
-    
+
     if (minDist == DEFAULT_DIST ){
         return undefined;
     }
@@ -354,6 +372,47 @@ function colorRedBoxRGB() {
     }
     context.putImageData(imgData, 0, 0);
 }
+
+
+// utils
+
+Array.prototype.minElement = function(){
+    var n = this.length;
+    var minElement = this[0];
+    for (var i = 0; i< n; i++){
+        if (this[i]<= minElement){
+            minElement = this[i];
+        }
+    }
+    return minElement;
+}
+
+Array.prototype.maxElement = function(){
+    var n = this.length;
+    var maxElement = this[0];
+    for (var i = 0; i< n; i++){
+        if (this[i]>= maxElement){
+            maxElement = this[i];
+        }
+    }
+    return maxElement;
+}
+
+//Paramters:
+//  rgb object: a pixel's color vector represented by an rgb object, ex: {r: (num between 0-255), g; (some), b:(same)}
+//  threshold: a number stating how large the difference betwen rgb values must be
+//Returns:
+//  boolean value that conveys whether the difference between red and blue and red and green is greater than a threshold value
+//  function used to determine what bands should be determined to be red enough
+function isRedDiff(rgbObj, threshold){
+    var r=rgbObj.r;
+    var g=rgbObj.g;
+    var b=rgbObj.b;
+
+    return ((r-g)>=threshold) && ((r-b)>=threshold);
+
+}
+
 
 
 

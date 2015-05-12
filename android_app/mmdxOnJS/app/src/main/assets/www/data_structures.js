@@ -49,9 +49,9 @@ Rectangle.prototype.findTopCorner = function(){
 	var b = this.corners[1];
 	var c = this.corners[2];
 	var d = this.corners[3];
-    
+    var ys = [a.y, b.y, c.y, d.y];
     //highest element
-    var y = [a.y, b.y, c.y, d.y].minElement();
+    var y = ys.minElement();
     if (a.y==y){
         return a;
     }
@@ -81,7 +81,8 @@ Rectangle.prototype.findBottomCorner = function(){
 	var d = this.corners[3];
     
     //highest element
-    var y = [a.y, b.y, c.y, d.y].maxElement();
+    var ys = [a.y, b.y, c.y, d.y];
+    var y = ys.maxElement();
     if (a.y==y){
         return a;
     }
@@ -111,7 +112,8 @@ Rectangle.prototype.findRightCorner = function(){
     var d = this.corners[3];
     
     //highest element
-    var x = [a.x, b.x, c.x, d.x].maxElement();
+    var xs = [a.x, b.x, c.x, d.x];
+    var x = xs.maxElement();
     if (a.x==x){
         return a;
     }
@@ -141,7 +143,8 @@ Rectangle.prototype.findLeftCorner = function(){
     var d = this.corners[3];
     
     //highest element
-    var x = [a.x, b.x, c.x, d.x].minElement();
+    var xs = [a.x, b.x, c.x, d.x];
+    var x = xs.minElement();
     if (a.x==x){
         return a;
     }
@@ -161,15 +164,23 @@ Rectangle.prototype.findLeftCorner = function(){
 }
 
 Rectangle.prototype.findDirectionOfRotation = function(){
-    var top_corner = this.findTopCorner();
-    var left_corner = this.findLeftCorner();
-    var right_corner = this.findRightCorner();
+    var c1 = this.getCorners()[0];
+    var c3 = this.getCorners()[2];
+    // var top_corner = this.findTopCorner();
+    // var left_corner = this.findLeftCorner();
+    // var right_corner = this.findRightCorner();
     //CW
-    if (distance(top_corner, left_corner)>distance(top_corner, right_corner)){
-        return "CW";
+    // if (distance(top_corner, left_corner)>distance(top_corner, right_corner)){
+    //     return "CW";
+    // }
+    // else{
+    //     return "CCW";
+    // }
+    if (c1.y<c3.y){
+        return "CCW";
     }
     else{
-        return "CCW";
+        return "CW";
     }
 
 }
@@ -178,60 +189,89 @@ Rectangle.prototype.findAngleOfRotation = function(){
     if (!this.rotated){
         return new Error("Angle of rotation is not required, the rectangle is not rotated", "Rectangle.prototype.findAngleOfRotation");
     }
-
-    var top = this.findTopCorner();
-    var left = this.findLeftCorner();
-    var bottom = this.findBottomCorner();
-    var right = this.findRightCorner();
+    var c1 = this.getCorners()[0];
+    var c3 = this.getCorners()[2];
+    // var top = this.findTopCorner();
+    // var left = this.findLeftCorner();
+    // var bottom = this.findBottomCorner();
+    // var right = this.findRightCorner();
     var direction = this.findDirectionOfRotation();
     console.log("Direction");
     console.log(direction);
     if (direction=="CW"){
-        var extra_top_point = new Point(top.x-10, top.y); 
-        var angle1 = findAngle(extra_top_point,top,left);
+        // var extra_top_point = new Point(top.x-10, top.y); 
+        // var angle1 = findAngle(extra_top_point,top,left);
 
-        var extra_bottom_point = new Point(top.x+10, top.y); 
-        var angle2 = findAngle(extra_bottom_point,bottom, right);
+        // var extra_bottom_point = new Point(top.x+10, top.y); 
+        // var angle2 = findAngle(extra_bottom_point,bottom, right);
 
-        var extra_left_point = new Point(left.x, left.y+10); 
-        var angle3 = findAngle(extra_left_point,left, bottom);
+        // var extra_left_point = new Point(left.x, left.y+10); 
+        // var angle3 = findAngle(extra_left_point,left, bottom);
 
-        var extra_right_point = new Point(right.x, left.y-10); 
-        var angle4 = findAngle(extra_right_point,right, top);
-        var angles = [angle1, angle2, angle3, angle4];
-        var minAngle = angles.minElement();
+        // var extra_right_point = new Point(right.x, left.y-10); 
+        // var angle4 = findAngle(extra_right_point,right, top);
+        // var angles = [angle1, angle2, angle3, angle4];
+        // var minAngle = angles.minElement();
         
 
+        // console.log("ANGLE CW");
+        // console.log(angle1*180/Math.PI);
+        // console.log(angle2*180/Math.PI);
+        // console.log(angle3*180/Math.PI);
+        // console.log(angle4*180/Math.PI); 
+
+        var extra_point = new Point(c3.x-10, c3.y)
+        var angle1 = findAngle(extra_point, c3, c1);
+        
         console.log("ANGLE CW");
         console.log(angle1*180/Math.PI);
-        console.log(angle2*180/Math.PI);
-        console.log(angle3*180/Math.PI);
-        console.log(angle4*180/Math.PI); 
         return new Angle(angle1, direction);
 
     }
     else{
-        var extra_top_point = new Point(top.x+10, top.y); 
-        var angle1 = findAngle(extra_top_point,top,right);
+        // var extra_top_point = new Point(top.x+10, top.y); 
+        // var angle1 = findAngle(extra_top_point,top,right);
 
-        var extra_bottom_point = new Point(top.x-10, top.y); 
-        var angle2 = findAngle(extra_bottom_point,bottom, left);
+        // var extra_bottom_point = new Point(top.x-10, top.y); 
+        // var angle2 = findAngle(extra_bottom_point,bottom, left);
 
-        var extra_left_point = new Point(left.x, left.y-10); 
-        var angle3 = findAngle(extra_left_point,left, top);
+        // var extra_left_point = new Point(left.x, left.y-10); 
+        // var angle3 = findAngle(extra_left_point,left, top);
 
-        var extra_right_point = new Point(right.x, left.y+10); 
-        var angle4 = findAngle(extra_right_point,right, bottom);
+        // var extra_right_point = new Point(right.x, left.y+10); 
+        // var angle4 = findAngle(extra_right_point,right, bottom);
 
-        var angles = [angle1, angle2, angle3, angle4];
-        var minAngle = angles.minElement();
+        // var angles = [angle1, angle2, angle3, angle4];
+        // var minAngle = angles.minElement();
+
+        var extra_point = new Point(c1.x+10, c1.y)
+        var angle1 = findAngle(extra_point, c1, c3);
         
         console.log("ANGLE CCW");
         console.log(angle1*180/Math.PI);
-        console.log(angle2*180/Math.PI); 
-        console.log(angle3*180/Math.PI);
-        console.log(angle4*180/Math.PI); 
         return new Angle(2*Math.PI-angle1, direction);
     }
     
+}
+
+Array.prototype.minElement = function(){
+    var n = this.length;
+    var minElement = this[0];
+    for (var i = 0; i< n; i++){
+        if (this[i]<= minElement){
+            minElement = this[i];
+        }
+    }
+    return minElement;
+}
+
+Array.prototype.maxElement = function(){
+    var n = this.length;
+    var maxElement = this[0];
+    for (var i = 0; i< n; i++){
+        if (this[i]>= maxElement){
+            maxElement = this[i];
+        }
+    }
+    return maxElement;
 }

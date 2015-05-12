@@ -2,9 +2,11 @@
 <html>
 <head>
     <!-- Stylesheets -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
     <link rel="stylesheet" href="stylesheets/style.css">
     <link rel="stylesheet" href="resources/bootstrap.min.css">
     <link rel="stylsesheet" href="resources/bootstrap-theme.min.css">
+
 
     
     <!-- External resources and libraries -->
@@ -19,8 +21,9 @@
     <script type="text/javascript" src="test_images/test_images_rotated.js"></script>
 
     <!-- Own methods and helpers -->
-    <script type="text/javascript" src="javascripts/helpers.js"></script>
-    <script type="text/javascript" src="javascripts/data_structures.js"></script>
+    <script type="text/javascript" src="helpers.js"></script>
+    <script type="text/javascript" src="data_structures.js"></script>
+    <script type="text/javascript" src="utils.js"></script>
 
     <!-- Google API for Geolocation-->
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script>
@@ -29,7 +32,6 @@
     
 
 </head>
-<!--<body onload="DisplayRandomMap()"> -->
 <body>
 <div class="container-fluid">
     <div class="row">
@@ -125,27 +127,41 @@
 
 
 //************ COMMENT OUT INSIDE ANDROID ***************
+    // //Set test image
+    // var mmdx_image = mmdx_image_normal;
+    // //var mmdx_image = getImageRotated10();
 
-    //Set test image
-    //var mmdx_image = mmdx_image_normal;
-    //var mmdx_image = getImageRotated10();
+    
+    // imageObj.src = getImageRotated40();
+    // //"https://dl.dropboxusercontent.com/s/npfv94ktix8fqrz/20150510_171950.jpg";
+    
+    // //"https://dl.dropboxusercontent.com/s/lsebdpc9rdo42li/1431378655452.jpg"; //native tracking works with isRed in this file
 
-    //imageObj.src = mmdx_image_tilted_left;
-    //imageObj.crossOrigin = "anonymous"; //just in case
+    // //"https://dl.dropboxusercontent.com/s/8lkfdh28ajgxkuc/1431378100503.jpg";//native tracking works
+    // //"https://dl.dropboxusercontent.com/s/d32lmuakp8q0f9d/1431284418461.jpg"; //didn't work carton markers
+    // //"https://dl.dropboxusercontent.com/s/n2o5pft318g74vq/1431292734919.jpg";
+    
+     
+
+    // imageObj.crossOrigin = "anonymous"; //just in case
 
 
-    //draw image to canvas
-    //imageObj.onload = function() {
+    // //draw image to canvas
+    // imageObj.onload = function() {
     //    imageHeight = imageObj.height;
     //    imageWidth = imageObj.width;
     //    canvas.height = imageHeight;
     //    canvas.width = imageWidth;
     //    context.drawImage(imageObj,0, 0);
-    //};
-    //function loadImage(image_base64){
+    // };
+    // function loadImage(image_base64){
     //    imageObj.src = image_base64
-    //}
+    // }
 //******** END COMMENT OUT INSIDE ANDROID ***************
+
+
+
+
 
 
     //array that has the positional data of the lanes to be processed
@@ -190,6 +206,7 @@
         var tracker = new tracking.ColorTracker(['marker']);
         tracker.on('track', function(event) {
             event.data.forEach(function(rect) {
+                console.log("tracking found smth");
                 tracked_rect = rect;
                 var x = rect.x;
                 var y = rect.y;
@@ -200,55 +217,15 @@
 
                 var rotated = checkIfRotated();
                 markerRectangle = new Rectangle(corners, rotated);
-                drawRectangle(markerRectangle.getCorners());
+                drawRectangle(markerRectangle.getCorners(), "blue");
                 if (markerRectangle.isRotated()){
                     findCorners();
                 }
-                drawRectangle(markerRectangle.getCorners());
+                drawRectangle(markerRectangle.getCorners(), "yellow");
             });
         });
         tracking.track('#canvas', tracker); //start tracking
 
-    };
-
-    
-    /**
-    Additional detection if the image is rotated and corners form tracking.js 
-    might not be exact
-    */
-    var detectCorners = function(){
-        // parameters for Harris corner detection
-        // blockSize: Neighborhood size (3×3 or 5×5)
-        // k: Harris detector free parameter (recommends 0.04 ~ 0.15)
-        // qualityLevel: Parameter characterizing the minimal accepted quality of image corners
-        var params = {blockSize: 5, k: 0.04, qualityLevel: 0.01 };
-        // img: ImageData object
-        // returns Array of detected corners
-        var img = context.getImageData(0,0,imageWidth, imageHeight);
-        pixels = img.data;
-        var corners = CornerDetector.detect(img, CornerDetector.HARRIS, params);//all corners
-        var nonzero = [];
-        for (var i = 0; i< corners.length; i++){
-            if (corners[i]!=0){
-                nonzero.push(i);
-            }
-        }
-        //filter by color
-        var redCorners = [];
-        for (var j=0; j< nonzero.length; j++){
-            var coords = getCoordsFromPixelOffset(nonzero[j], imageWidth, imageHeight);
-            if (isAreaRed(coords[0],coords[1], 2, pixels, imageWidth, imageHeight)){
-                redCorners.push(new Point(coords[0], coords[1]));
-                //visually show detected points
-                context.beginPath();
-                context.arc(coords[0], coords[1], 5, 0, 2 * Math.PI);
-                context.lineWidth = 2;
-                context.strokeStyle = 'yellow';
-                context.stroke();
-            }
-        }
-
-        return redCorners;
     };
     
     /*
@@ -256,42 +233,53 @@
     tracker found a correct rectangle
     */
     var checkIfRotated = function(){
-        var threshhold = .1;  //NEED TO ADJUST/TEST
+        console.log("checkIfRotated");
+        var threshhold = .4;  //NEED TO ADJUST/TEST
         var x = tracked_rect.x;
         var y = tracked_rect.y;
         var w = tracked_rect.width;
         var h = tracked_rect.height;
-        var numPoints = 2*(w+h);
+        var numPoints = 10*(w+(h-10));
         var countRed = 0;
         //move along the top edge
-        for (var i = 0; i<w; i++){
-            var px = getPixelRGB(pixels, x+i, y, imageWidth, imageWidth);
-            if (isRed(px)){
-                countRed++
+        for (var p=0; p<5;p++){
+            for (var i = 0; i<w; i++){
+                var px = getPixelRGB(pixels, x+i, y+p, imageWidth, imageWidth);
+                if (isRed(px)){
+                    countRed++
+                }
             }
         }
         //bottom edge
-        for (var i = 0; i<w; i++){
-            var px = getPixelRGB(pixels, x+i, y+h, imageWidth, imageWidth);
-            if (isRed(px)){
-                countRed++
+        for (var p=0; p<5;p++){
+            for (var i = 0; i<w; i++){
+                var px = getPixelRGB(pixels, x+i, y+h-p, imageWidth, imageWidth);
+                if (isRed(px)){
+                    countRed++
+                }
             }
         }
 
         //left edge
-        for (var i = 0; i<h; i++){
-            var px = getPixelRGB(pixels, x, y+i, imageWidth, imageWidth);
-            if (isRed(px)){
-                countRed++
+        for (var p=0; p<5;p++){
+            for (var i = 5; i<h-5; i++){
+                var px = getPixelRGB(pixels, x+p, y+i, imageWidth, imageWidth);
+                if (isRed(px)){
+                    countRed++
+                }
             }
         }
         //right edge
-        for (var i = 0; i<h; i++){
-            var px = getPixelRGB(pixels, x+w, y+i, imageWidth, imageWidth);
-            if (isRed(px)){
-                countRed++
+        for (var p=0; p<5;p++){
+            for (var i = 5; i<h-5; i++){
+                var px = getPixelRGB(pixels, x+w-p, y+i, imageWidth, imageWidth);
+                if (isRed(px)){
+                    countRed++
+                }
             }
         }
+        console.log("ratio");
+        console.log(countRed/numPoints);
         if (countRed/numPoints < threshhold){
             return true;
         }
@@ -300,96 +288,114 @@
         }
     };
 
-    /*
-    If oldCheckIfRotated returns true, finds the corners of the rotated markers
-    */
+    // Now we use a "radius" walk to find point closer to the corner of the tracking.js blue rectangle
     var findCorners = function(){
+
+        console.log("Finding corners 2");
         var x = tracked_rect.x;
         var y = tracked_rect.y;
         var w = tracked_rect.width;
         var h = tracked_rect.height;
         var c1, c2, c3, c4; //corners
 
-        //check possible combinations:
-
-        var inc = -1;
-
-        // walk along the top rect edge (and lines right below), find the first points where
-        // the detected rectange intersects the marker (first red point)
-        while (!c1){
-            inc++;
-            for (var i = 0; i < w; i++){
-                var px = getPixelRGB(pixels, x+i, y+inc, imageWidth, imageWidth);
+        var radius = Math.min(w,h);
+        
+        //upper left (x, y)
+        for (var iter = 1; iter<radius; iter++){
+            var i = iter;
+            var j = 0;
+            var check=true;
+            while (i>=0 && check){
+                var px = getPixelRGB(pixels, x+i, y+j, imageWidth, imageWidth);
                 if (isRed(px)){
-                    c1 = new Point(x+i, y);
+                    c1 = new Point(x+i, y+j);
                     console.log("C1");
                     console.log(c1);
-                    break;
+                    check=false;
                 }
+                i--;
+                j++;    
             }
+            if (!check){
+                break;
+            }             
         }
-        //same for the bottom rect egde
-        inc = -1;
-        while (!c2){
-            inc++;
-            for (var i = 0; i < w; i++){
-                var px = getPixelRGB(pixels, x+i, y+h-inc, imageWidth, imageWidth);
+        //upper right (x+w, y)
+        for (var iter = 1; iter<radius; iter++){
+            var i = iter;
+            var j = 0;
+            var check=true;
+            while (i>=0 && check){
+                var px = getPixelRGB(pixels, x+w-i, y+j, imageWidth, imageWidth);
                 if (isRed(px)){
-                    c2 = new Point(x+i, y+h);
-                    console.log("C2");
-                    console.log(c2);
-                    break;
-                }
-            }
-        }
-        // left rect edge
-        inc = -1;
-        while (!c3){
-            inc++;
-            //leftline
-            for (var i = 0; i < h; i++){
-                var px = getPixelRGB(pixels, x+inc, y+i, imageWidth, imageWidth);
-                if (isRed(px)){
-                    c3 = new Point(x, y+i);
+                    c3 = new Point(x+w-i, y+j);
                     console.log("C3");
                     console.log(c3);
-                    break;
+                    check=false;
                 }
+                i--;
+                j++;    
             }
+            if (!check){
+                break;
+            }             
         }
-        // right rect edge
-        while (!c4){
-            inc++;
-            for (var i = 0; i < h; i++){
-                var px = getPixelRGB(pixels, x+w-inc, y+i, imageWidth, imageWidth);
+
+        //lower left (x, y+h)
+        for (var iter = 1; iter<radius; iter++){
+            var i = iter;
+            var j = 0;
+            var check=true;
+            while (i>=0 && check){
+                var px = getPixelRGB(pixels, x+i, y+h-j, imageWidth, imageWidth);
                 if (isRed(px)){
-                    c4 = new Point(x+w, y+i);
+                    c4 = new Point(x+i, y+h-j);
                     console.log("C4");
                     console.log(c4);
-                    break;
+                    check=false;
                 }
+                i--;
+                j++;    
             }
+            if (!check){
+                break;
+            }             
         }
-        //adjust corners according to the Harris operator
-        var cornersHarris = detectCorners();
-        var corners = [c1,c2,c3,c4];
-        for (var i = 0; i< 4; i++){
-            var closest = findClosest(corners[i], cornersHarris, imageWidth*0.02);
-            if (closest){
-                corners[i] = closest;
-            }
 
+        //lower right (x+w, y+h)
+        for (var iter = 1; iter<radius; iter++){
+            var i = iter;
+            var j = 0;
+            var check=true;
+            while (i>=0 && check){
+                var px = getPixelRGB(pixels, x+w-i, y+h-j, imageWidth, imageWidth);
+                if (isRed(px)){
+                    c2 = new Point(x+w-i, y+h-j);
+                    console.log("C2");
+                    console.log(c2);
+                    check=false;
+                }
+                i--;
+                j++;    
+            }
+            if (!check){
+                break;
+            }             
         }
-        markerRectangle.setCorners(corners);
+
+
+
+        markerRectangle.setCorners([c1,c2,c3,c4]);
 
     };
 
-    var drawRectangle = function(points){
+    var drawRectangle = function(points, color){
         var c1 = points[0];
         var c2 = points[1];
         var c3 = points[2];
         var c4 = points[3];
         console.log("drawCorners:",c1,c2,c3,c4 );
+        context.strokeStyle = color;
         context.beginPath();
         context.beginPath();
         context.moveTo(c1.x,c1.y);
@@ -690,7 +696,7 @@
             console.log("POS Running");
             var pos = new google.maps.LatLng(position.coords.latitude,
                                            position.coords.longitude);
-            //console.log("INFO-WINDOW Running");
+            console.log("INFO-WINDOW Running");
             // var infowindow = new google.maps.InfoWindow({
             //     map: map,
             //     position: pos,
@@ -713,7 +719,8 @@
                 },
             { timeout:60000,
               enableHighAccuracy:false
-          });
+          }
+          );
         } else {
             console.log("NAVIGATOR NOT OK");
             // Browser doesn't support Geolocation
@@ -736,7 +743,7 @@
       //   content: content
       // };
       // var infowindow = new google.maps.InfoWindow(options);
-      //map.setCenter(options.position);
+      // map.setCenter(options.position);
   }
 
 //************************** END GEOLOCATION ******************************************
@@ -863,7 +870,7 @@
         var mousePos = getMousePos(canvas, evt);
         var message = 'Mouse position: ' + mousePos.x + ', ' + mousePos.y +
                 "  :  Color: " + mousePos.r+ ', ' +mousePos.g+ ', ' +mousePos.b+
-                "  :  HSL: "+mousePos.h.toFixed(2)+ ', ' +mousePos.s.toFixed(2)+ ', ' +mousePos.l.toFixed(2);
+                "  :  HSL: "+mousePos.h.toFixed(2)+ ', ' +mousePos.s.toFixed(2)+ ', ' +mousePos.l.toFixed(2)+" isRed: "+isRed({r:mousePos.r, g:mousePos.g, b:mousePos.b});
         $("#mousePos").text(message);
     }, false);
 
