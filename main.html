@@ -115,14 +115,11 @@
         imageObj.src = image_base64
     }
 
-
 //*****************************************************************************************************
 //*****************************************************************************************************
 //*********************************** YOU CAN COPY CODE AS FROM HERE INTO THE INNER ONE****************
 //*****************************************************************************************************
 //*****************************************************************************************************
-
-
     //Register color tracking.js uses to identify markers
     tracking.ColorTracker.registerColor('marker', function(r, g, b) {
         if (isRedRGB(r,g,b)) {
@@ -130,7 +127,6 @@
         }
         return false;
     });
-
 
     // PURE DEMO FUNCTION (to show how good cornderdetect.js is, does nothing for image processing)
     var cornerDetectionDemo = function(){
