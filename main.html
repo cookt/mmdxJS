@@ -219,53 +219,13 @@
                 markerRectangle = new Rectangle(corners, rotated);
                 drawRectangle(markerRectangle.getCorners(), "blue");
                 if (markerRectangle.isRotated()){
-                    findCorners2();
+                    findCorners();
                 }
                 drawRectangle(markerRectangle.getCorners(), "yellow");
             });
         });
         tracking.track('#canvas', tracker); //start tracking
 
-    };
-
-    
-    /**
-    Additional detection if the image is rotated and corners form tracking.js 
-    might not be exact
-    */
-    var detectCorners = function(){
-        // parameters for Harris corner detection
-        // blockSize: Neighborhood size (3×3 or 5×5)
-        // k: Harris detector free parameter (recommends 0.04 ~ 0.15)
-        // qualityLevel: Parameter characterizing the minimal accepted quality of image corners
-        var params = {blockSize: 5, k: 0.04, qualityLevel: 0.01 };
-        // img: ImageData object
-        // returns Array of detected corners
-        var img = context.getImageData(0,0,imageWidth, imageHeight);
-        pixels = img.data;
-        var corners = CornerDetector.detect(img, CornerDetector.HARRIS, params);//all corners
-        var nonzero = [];
-        for (var i = 0; i< corners.length; i++){
-            if (corners[i]!=0){
-                nonzero.push(i);
-            }
-        }
-        //filter by color
-        var redCorners = [];
-        for (var j=0; j< nonzero.length; j++){
-            var coords = getCoordsFromPixelOffset(nonzero[j], imageWidth, imageHeight);
-            if (isAreaRed(coords[0],coords[1], 2, pixels, imageWidth, imageHeight)){
-                redCorners.push(new Point(coords[0], coords[1]));
-                //visually show detected points
-                context.beginPath();
-                context.arc(coords[0], coords[1], 5, 0, 2 * Math.PI);
-                context.lineWidth = 2;
-                context.strokeStyle = 'yellow';
-                context.stroke();
-            }
-        }
-
-        return redCorners;
     };
     
     /*
@@ -328,92 +288,8 @@
         }
     };
 
-    /*
-    If oldCheckIfRotated returns true, finds the corners of the rotated markers
-    */
+    // Now we use a "radius" walk to find point closer to the corner of the tracking.js blue rectangle
     var findCorners = function(){
-        console.log("Finding corners");
-        var x = tracked_rect.x;
-        var y = tracked_rect.y;
-        var w = tracked_rect.width;
-        var h = tracked_rect.height;
-        var c1, c2, c3, c4; //corners
-
-        //check possible combinations:
-
-        var inc = -1;
-
-        // walk along the top rect edge (and lines right below), find the first points where
-        // the detected rectange intersects the marker (first red point)
-        while (!c1){
-            inc++;
-            for (var i = 0; i < w; i++){
-                var px = getPixelRGB(pixels, x+i, y+inc, imageWidth, imageWidth);
-                if (isRed(px)){
-                    c1 = new Point(x+i, y);
-                    console.log("C1");
-                    console.log(c1);
-                    break;
-                }
-            }
-        }
-        //same for the bottom rect egde
-        inc = -1;
-        while (!c2){
-            inc++;
-            for (var i = 0; i < w; i++){
-                var px = getPixelRGB(pixels, x+i, y+h-inc, imageWidth, imageWidth);
-                if (isRed(px)){
-                    c2 = new Point(x+i, y+h);
-                    console.log("C2");
-                    console.log(c2);
-                    break;
-                }
-            }
-        }
-        // left rect edge
-        inc = -1;
-        while (!c3){
-            inc++;
-            //leftline
-            for (var i = 0; i < h; i++){
-                var px = getPixelRGB(pixels, x+inc, y+i, imageWidth, imageWidth);
-                if (isRed(px)){
-                    c3 = new Point(x, y+i);
-                    console.log("C3");
-                    console.log(c3);
-                    break;
-                }
-            }
-        }
-        // right rect edge
-        while (!c4){
-            inc++;
-            for (var i = 0; i < h; i++){
-                var px = getPixelRGB(pixels, x+w-inc, y+i, imageWidth, imageWidth);
-                if (isRed(px)){
-                    c4 = new Point(x+w, y+i);
-                    console.log("C4");
-                    console.log(c4);
-                    break;
-                }
-            }
-        }
-        //adjust corners according to the Harris operator
-        var cornersHarris = detectCorners();
-        var corners = [c1,c2,c3,c4];
-        for (var i = 0; i< 4; i++){
-            var closest = findClosest(corners[i], cornersHarris, imageWidth*0.02);
-            if (closest){
-                corners[i] = closest;
-            }
-
-        }
-        markerRectangle.setCorners(corners);
-
-    };
-
-    var findCorners2 = function(){
 
         console.log("Finding corners 2");
         var x = tracked_rect.x;
