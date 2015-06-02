@@ -65,7 +65,7 @@ var isAreaBlack = function(x,y, areaSize, pixels, imageWidth, imageHeight){
 function rgbToHsl(r, g, b) {
     r /= 255, g /= 255, b /= 255;
     var max = Math.max(r, g, b),
-            min = Math.min(r, g, b);
+        min = Math.min(r, g, b);
     var h, s, l = (max + min) / 2;
 
     if (max == min) {
@@ -130,9 +130,9 @@ var isRed = function(px){
     var  hsl = rgbToHsl(px.r, px.g,px.b);
     var hue = hsl.h * 360;
     if (((hue<=HUE_TOP_UPPER_BOUND && hue >=HUE_TOP_LOWER_BOUND) ||
-    (hue >=HUE_BOTTOM_LOWER_BOUND && hue <=HUE_BOTTOM_UPPER_BOUND)) &&
-    (hsl.s > SATURATION_LOWER_BOUND && hsl.s <= SATURATION_UPPER_BOUND) &&
-    (hsl.l>LIGHTNESS_LOWER_BOUND && hsl.l<LIGHTNESS_UPPER_BOUND)){
+        (hue >=HUE_BOTTOM_LOWER_BOUND && hue <=HUE_BOTTOM_UPPER_BOUND)) &&
+        (hsl.s > SATURATION_LOWER_BOUND && hsl.s <= SATURATION_UPPER_BOUND) &&
+        (hsl.l>LIGHTNESS_LOWER_BOUND && hsl.l<LIGHTNESS_UPPER_BOUND)){
         return true
     }
     else{
@@ -152,7 +152,7 @@ var isBlack = function(px){
 
 var isBlackRGB = function(r,g,b){
     var  hsl = rgbToHsl(r, g, b);
-    if ((hsl.l < BLACK_LIGHTNESS_UPPER_BOUND) || (r < 120 && g < 120 && b < 120 && hsl.s > BLACK_SATURATION_LOWER_BOUND && hsl.l <40)){
+    if ((hsl.l < BLACK_LIGHTNESS_UPPER_BOUND) || (r < 110 && g < 110 && b < 110 && hsl.s > BLACK_SATURATION_LOWER_BOUND && hsl.l <40)){
         return true
     }
     else{
@@ -194,7 +194,7 @@ function findClosest(A,listB, error){
             }
         }
     }
-    
+
     if (minDist == DEFAULT_DIST ){
         return undefined;
     }
@@ -416,7 +416,6 @@ Array.prototype.maxElement = function(){
     }
     return maxElement;
 }
-
 
 
 

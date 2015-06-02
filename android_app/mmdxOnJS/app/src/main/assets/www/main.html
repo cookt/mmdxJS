@@ -37,11 +37,10 @@
     <div class="row">
         <div class="canvas-container">
             <canvas id="canvas" class="row"></canvas>
-            <p id="runtimeAnalysis"></p>
-            <p id="mousePos"></p>
         </div>
-
+        <!--
         <div id ="controls" class="btn-group-vertical row" role="group">
+            <button type="button" class="btn btn-default" onclick = "all()"> All </button>
             <button type="button" class="btn btn-default" onclick = "getRuntime(detect)"> Detect rectange </button>
             <button type="button" class="btn btn-default" onclick = "getRuntime(crop)"> Crop </button>
             <button type="button" class="btn btn-default" onclick = "getRuntime(rotate)"> Rotate </button>
@@ -50,7 +49,9 @@
             <button type="button" class="btn btn-default" onclick = "getRuntime(LocateMe)"> Find Location </button>
             <button type="button" class="btn btn-default" onclick = "getRuntime(processAllLanes)">Process Lanes</button>
         </div>
+
         <div id="map-canvas" class="row"></div>
+        -->
     </div>
     <div id="graph-container">
         <h3 id="chartTitle"></h3>
@@ -123,7 +124,20 @@
 
                 context.drawImage(oc, 0, 0, oc.width * resolution, oc.height * resolution,
                         0, 0, canvas.width, canvas.height);
+                all();
             }
+
+        }
+
+        function all (){
+            console.log("here");
+            detect();
+            setTimeout(crop(),1100);
+            setTimeout(rotate(),1400);
+            setTimeout(removeMarkers(),1700);
+            setTimeout(getBlackBoxes(),2000);
+            setTimeout(processAllLanes(),2300);
+            LocateMe();
         }
 
 
@@ -420,7 +434,7 @@
          */
         var rotate = function (){
             if (!markerRectangle.isRotated()){
-                alert("no need to rotate");
+            //    alert("no need to rotate");
                 return;
             }
             var c1 = markerRectangle.getCorners()[0];
