@@ -104,6 +104,7 @@
             //console.log("Image from android");
             //console.log(image_base64.substring(0, 50));
             imageObj.onload = function() {
+                var resolution = .9;
                 imageHeight = imageObj.height;
                 imageWidth = imageObj.width;
                 //canvas.height = imageHeight;
@@ -114,13 +115,13 @@
                 /// step 1
                 var oc = document.createElement('canvas'),
                         octx = oc.getContext('2d');
-                oc.width = imageWidth * 0.5;
-                oc.height = imageHeight * 0.5;
+                oc.width = imageWidth * resolution;
+                oc.height = imageHeight * resolution;
                 octx.drawImage(imageObj, 0, 0, oc.width, oc.height);
                 /// step 2
-                octx.drawImage(oc, 0, 0, oc.width * 0.5, oc.height * 0.5);
+                octx.drawImage(oc, 0, 0, oc.width * resolution, oc.height * resolution);
 
-                context.drawImage(oc, 0, 0, oc.width * 0.5, oc.height * 0.5,
+                context.drawImage(oc, 0, 0, oc.width * resolution, oc.height * resolution,
                         0, 0, canvas.width, canvas.height);
             }
         }
@@ -530,15 +531,23 @@
                 x--;
             }
             rightEdge = x-1 - padding;
-            console.log(leftEdge, rightEdge, upperEdge, lowerEdge);
-            context.drawImage(canvas, leftEdge, upperEdge, rightEdge - leftEdge, lowerEdge - upperEdge, 0, 0, w, h);
+            //console.log(leftEdge, rightEdge, upperEdge, lowerEdge);
+            //context.drawImage(canvas, leftEdge, upperEdge, rightEdge - leftEdge, lowerEdge - upperEdge, 0, 0, w, h);
+            var oldCanvas = document.createElement('canvas');
+            var oldContext = oldCanvas.getContext('2d');
+            oldCanvas.height = h/3;
+            oldCanvas.width = w/3;
+            oldContext.drawImage(canvas, leftEdge, upperEdge, rightEdge - leftEdge, lowerEdge - upperEdge, 0, 0, w/3, h/3);
+            canvas.width = w/3;
+            canvas.height = h/3;
+            context.drawImage(oldCanvas,0,0);
         }
         //****************************** END RECOGNITION: REMOVE MARKERS *********************
         //****************************** RECOGNITION: BLACK BOX DETECTION ********************
         function getBlackBoxes(){
             //This is just for optimization might get rid of it if it causes problems
             var searchWidth = canvas.width;
-            var searchHeight = canvas.height * .20;
+            var searchHeight = canvas.height * .40;
             //coordinates of the black boxes
             var rawBoxData = [];
             var boxArray = [];
@@ -551,12 +560,17 @@
             function getMiddleYOfBoxes() {
                 var startColumn = 0;
                 var horizontalMiddleOfBox = 0;
-                while (!foundFirstBoxEdge(data) && horizontalMiddleOfBox < searchHeight) {
+                while (!foundFirstBoxEdge(data,horizontalMiddleOfBox) && horizontalMiddleOfBox < searchHeight) {
+                    //context.fillStyle="purple";
+                    //context.fillRect(startColumn,horizontalMiddleOfBox,3,3);
                     pixelRow = context.getImageData(startColumn, horizontalMiddleOfBox, searchWidth, 1);
                     data = pixelRow.data;
                     horizontalMiddleOfBox++;
                 }
                 horizontalMiddleOfBox += canvas.height * .04;
+                //context.fillStyle="orange";
+                //context.fillRect(startColumn,horizontalMiddleOfBox,3,2);
+                console.log("Middle Row: " , horizontalMiddleOfBox);
                 return horizontalMiddleOfBox;
             }
             /**

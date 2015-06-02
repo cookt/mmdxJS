@@ -12,6 +12,9 @@ var SATURATION_UPPER_BOUND = 1.0;
 var LIGHTNESS_LOWER_BOUND = 0.1;
 var LIGHTNESS_UPPER_BOUND = 0.80;
 
+//CONSTANTS used in isBlackRGB:
+var BLACK_LIGHTNESS_UPPER_BOUND = 0.2;
+var BLACK_SATURATION_LOWER_BOUND = 0.07;
 
 
 // HELPERS
@@ -149,7 +152,7 @@ var isBlack = function(px){
 
 var isBlackRGB = function(r,g,b){
     var  hsl = rgbToHsl(r, g, b);
-    if (hsl.l <.1){
+    if ((hsl.l < BLACK_LIGHTNESS_UPPER_BOUND) || (r < 120 && g < 120 && b < 120 && hsl.s > BLACK_SATURATION_LOWER_BOUND && hsl.l <40)){
         return true
     }
     else{
@@ -213,14 +216,20 @@ function getRuntime(funct){
  * @param data (row of pixel data)
  * @returns {boolean}
  */
-function foundFirstBoxEdge(data){
+function foundFirstBoxEdge(data,y){
     for (var x = 0; x < data.length; x+=4) {
+        //context.fillStyle="yellow";
+        //context.fillRect(x,y,1,1);
         if (isBlackRGB(data[x],data[x+1],data[x+2])) {
+            context.fillStyle="blue";
+            context.fillRect(x/4,y,1,1);
             var checkedFurther = true;
-            for(var verifyX = x; verifyX < x+40; verifyX+=4) {
+            for(var verifyX = x; verifyX < x+20; verifyX+=4) {
                 if (!isBlackRGB(data[verifyX],data[verifyX+1],data[verifyX+2])) {
                     checkedFurther = false;
                 }
+                //context.fillStyle="green";
+                //context.fillRect(verifyX/4,y,1,1);
             }
             if(checkedFurther){
                 return true;
@@ -241,6 +250,7 @@ function foundFirstBoxEdge(data){
 // we assign it as the start width of the box. Then we keep going while we see black and assign the first not black pixel as the end width.
 // This is called four times for the four boxes.
 function findBlackBoxEdgesFromMiddle(startX,boxes,data) {
+    console.log("findBlackBoxEdgesFromMiddle");
     var lastX = 0;
     for (var x = startX; x < data.length; x+=4) {
         if (isBlackRGB(data[x],data[x+1],data[x+2])) {
@@ -251,9 +261,12 @@ function findBlackBoxEdgesFromMiddle(startX,boxes,data) {
                     checkedFurther = false;
                 }
             }
+            console.log("checkedFurther: ", checkedFurther);
             if(checkedFurther){
                 boxes.push(x/4);
                 while (isBlackRGB(data[x],data[x+1],data[x+2])) {
+                    //context.fillStyle="pink";
+                    //context.fillRect(x/4,20,2,2);
                     x+=4;
                 }
                 boxes.push(x/4);
@@ -285,15 +298,22 @@ function checkedForward(start,data){
  * @param box
  */
 function getHeights(box){
-    var pixelColumnMiddle  = context.getImageData(box[0]+6,0,1,canvas.height);
+    var x = box[0]+6;
+    var pixelColumnMiddle  = context.getImageData(x,0,1,canvas.height);
     var midData = pixelColumnMiddle.data;
     for(var y = 0; y < midData.length; y+=4){
+        //context.fillStyle="purple";
+        //context.fillRect(x,y/4,1,1);
         if(isBlackRGB(midData[y],midData[y+1],midData[y+2])){
             if(checkedForward(y, midData)){
+                //context.fillStyle="blue";
+                //context.fillRect(x,y/4,5,5);
                 box.push(y/4);
                 while(isBlackRGB(midData[y],midData[y+1],midData[y+2])){
                     y += 4;
                 }
+                //context.fillStyle="red";
+                //context.fillRect(x,y/4,4,4);
                 box.push(y/4);
             }
         }
@@ -317,7 +337,6 @@ function removeExtraYCoords(box){
     box.pop();
     box.splice(2,1);
 }
-
 
 
 /****************************                    TESTS                        *******************************/
