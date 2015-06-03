@@ -285,7 +285,7 @@ function findBlackBoxEdgesFromMiddle(startX,boxes,data) {
  */
 function checkedForward(start,data){
     var checkedFurther = true;
-    for(var verify = start; verify < start+40; verify+=4) {
+    for(var verify = start; verify < start+20; verify+=4) {
         if (!isBlackRGB(data[verify],data[verify+1],data[verify+2])) {
             checkedFurther = false;
         }
@@ -417,6 +417,20 @@ Array.prototype.maxElement = function(){
     return maxElement;
 }
 
+//Paramters:
+//  rgb object: a pixel's color vector represented by an rgb object, ex: {r: (num between 0-255), g; (some), b:(same)}
+//  threshold: a number stating how large the difference betwen rgb values must be
+//Returns:
+//  boolean value that conveys whether the difference between red and blue and red and green is greater than a threshold value
+//  function used to determine what bands should be determined to be red enough
+function isRedDiff(rgbObj, threshold){
+    var r=rgbObj.r;
+    var g=rgbObj.g;
+    var b=rgbObj.b;
+
+    return ((r-g)>=threshold) && ((r-b)>=threshold);
+
+}
 
 
 
