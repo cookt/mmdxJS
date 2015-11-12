@@ -29,7 +29,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.*;
 import android.content.Context;
-import android.widget.Button;
 import android.widget.Toast;
 
 
@@ -121,7 +120,7 @@ public class WebViewActivity extends Activity {
             }
 
             String message = object.toString();
-            Log.d("checking if called message", message);
+            Log.d("checking if called msg", message);
             httppost.setEntity(new StringEntity(message, "UTF8"));
             httppost.setHeader("Content-type", "application/json");
 
@@ -185,7 +184,7 @@ public class WebViewActivity extends Activity {
         mWebView.setWebViewClient(new MyWebViewClient());
         //geolocation start
         mWebView.getSettings().setGeolocationEnabled(true);  // enabling geolocation -s
-        mWebView.getSettings().setBuiltInZoomControls(true); //enabling zoom -s
+        //mWebView.getSettings().setBuiltInZoomControls(true); //enabling zoom -s
 
         mWebView.getSettings().setLoadWithOverviewMode(true);
         mWebView.getSettings().setUseWideViewPort(true);
@@ -236,10 +235,10 @@ public class WebViewActivity extends Activity {
     //to DEBUG?
 
     public void backToMain(View view){
-          finish();
-//        Intent intent = new Intent(WebViewActivity.this, MainActivity.class);
-//        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-//        startActivity(intent);
+		finish();
+        Intent intent = new Intent(WebViewActivity.this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
     }
 
     //********************* START: Exploring Native android Geolocation *************************

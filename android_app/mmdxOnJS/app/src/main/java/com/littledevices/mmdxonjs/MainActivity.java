@@ -37,9 +37,9 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
 
         // Enable Local Datastore.
-        Parse.enableLocalDatastore(this);
+        //Parse.enableLocalDatastore(this);
 
-        Parse.initialize(this, "z2v1UxBUDcOeOpP76S0kaJ0cMlPPfkB9qXUC2hsg", "OpVd1539IO5BB7WhXW47qSIjvlBbFJvTdz4WcNvs");
+        //Parse.initialize(this, "z2v1UxBUDcOeOpP76S0kaJ0cMlPPfkB9qXUC2hsg", "OpVd1539IO5BB7WhXW47qSIjvlBbFJvTdz4WcNvs");
 
         //testing parse
         // ParseObject testObject = new ParseObject("TestObject");
@@ -105,7 +105,7 @@ public class MainActivity extends ActionBarActivity {
             intent.putExtra("imagePath", imagePath);
             startActivity(intent);
 
-
+			cursor.close();
         }
         else{
             //do something else

@@ -26,7 +26,8 @@
     <!-- Google API for Geolocation-->
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script>
 
-
+    <!--Tag for mobile scaling-->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
 
 </head>
@@ -36,10 +37,10 @@
         <div class="canvas-container">
             <canvas id="canvas" class="row"></canvas>
         </div>
-        <!--
+
         <div id ="controls" class="btn-group-vertical row" role="group">
             <button type="button" class="btn btn-default" onclick = "all()"> All </button>
-            <button type="button" class="btn btn-default" onclick = "getRuntime(detect)"> Detect rectange </button>
+            <button type="button" class="btn btn-default" onclick = "getRuntime(detect)"> Detect rectangle </button>
             <button type="button" class="btn btn-default" onclick = "getRuntime(crop)"> Crop </button>
             <button type="button" class="btn btn-default" onclick = "getRuntime(rotate)"> Rotate </button>
             <button type="button" class="btn btn-default" onclick = "getRuntime(removeMarkers)"> Remove markers </button>
@@ -47,38 +48,11 @@
             <button type="button" class="btn btn-default" onclick = "getRuntime(LocateMe)"> Find Location </button>
             <button type="button" class="btn btn-default" onclick = "getRuntime(processAllLanes)">Process Lanes</button>
         </div>
-
-        <div id="map-canvas" class="row"></div>
         -->
     </div>
 
-    <div id="table-container">
-        <table id="resultsTable" class="table table-striped"></table>
-    </div>
-
-    <div id="graph-container">
-        <h3 id="chartTitle"></h3>
-        <canvas id="graph" width="900" height="600"></canvas>
-        <p>Graph Lane:</p><input type="number" id="laneNo" name="laneNo" value="0" min="0" oninput="input()">
-    </div>
 
     <script>
-
-        //********************************** GEOLOCATION SETUP **********************************
-        // var mapOptions = {
-        //     zoom: 1
-        //   };
-        // var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
-        // var DisplayRandomMap = function(){
-        //     var options = {
-        //         map: map,
-        //         position: new google.maps.LatLng(60, 105),
-        //         content: "Map Initialized"
-        //       };
-        //     var infowindow = new google.maps.InfoWindow(options);
-        //     map.setCenter(options.position);
-        // };
-        //********************************** END GEOLOCATION SETUP **********************************
 
         //********************************** CANVAS SETUP **********************************
 
@@ -114,8 +88,8 @@
                 //canvas.height = imageHeight;
                 //canvas.width = imageWidth;
                 //context.drawImage(imageObj,0, 0);
-                canvas.height = 800*(imageHeight/imageWidth);
-                canvas.width = 800;
+                canvas.height = 200*(imageHeight/imageWidth);
+                canvas.width = 200;
                 /// step 1
                 var oc = document.createElement('canvas'),
                         octx = oc.getContext('2d');
@@ -127,7 +101,7 @@
 
                 context.drawImage(oc, 0, 0, oc.width * resolution, oc.height * resolution,
                         0, 0, canvas.width, canvas.height);
-                all();
+                //all();
             }
 
         }
@@ -135,13 +109,12 @@
         function all (){
             console.log("here");
             detect();
-            setTimeout(crop(),1100);
-            setTimeout(rotate(),1400);
-            setTimeout(removeMarkers(),1700);
-            setTimeout(getBlackBoxes(),2000);
-            setTimeout(processAllLanes(),2300);
-            setTimeout(generateDiagnosis(),2900);
-            //LocateMe();
+            //setTimeout(crop(),1100);
+            //setTimeout(rotate(),1400);
+            //setTimeout(removeMarkers(),1700);
+            //setTimeout(getBlackBoxes(),2000);
+            //setTimeout(processAllLanes(),2300);
+            //setTimeout(generateDiagnosis(),2900);
         }
 
 
@@ -220,8 +193,8 @@
          Uses tracking.js to find markers (color details are specified above)
          Finds a rectangle around a detected object
          (tracker returns "rect" object {x: value, y:value, height:value, width:value, color:value})
-         If not rotated, will draw the abovementioned rectange and use its corners
-         If rotated, find the intersection of the actual rectange with the abovemention rectangle
+         If not rotated, will draw the above mentioned rectangle and use its corners
+         If rotated, find the intersection of the actual rectangle with the above mention rectangle
          and assigns corners correctly
          */
         function detect(){
