@@ -373,31 +373,6 @@ function colorRedBoxRGB() {
     context.putImageData(imgData, 0, 0);
 }
 
-
-// utils
-
-Array.prototype.minElement = function(){
-    var n = this.length;
-    var minElement = this[0];
-    for (var i = 0; i< n; i++){
-        if (this[i]<= minElement){
-            minElement = this[i];
-        }
-    }
-    return minElement;
-}
-
-Array.prototype.maxElement = function(){
-    var n = this.length;
-    var maxElement = this[0];
-    for (var i = 0; i< n; i++){
-        if (this[i]>= maxElement){
-            maxElement = this[i];
-        }
-    }
-    return maxElement;
-}
-
 //Paramters:
 //  rgb object: a pixel's color vector represented by an rgb object, ex: {r: (num between 0-255), g; (some), b:(same)}
 //  threshold: a number stating how large the difference betwen rgb values must be
@@ -412,7 +387,21 @@ function isRedDiff(rgbObj, threshold){
     return ((r-g)>=threshold) && ((r-b)>=threshold);
 
 }
-
-
-
-
+function range(start, stop, step){
+    if (typeof stop=='undefined'){
+        // one param defined
+        stop = start;
+        start = 0;
+    };
+    if (typeof step=='undefined'){
+        step = 1;
+    };
+    if ((step>0 && start>=stop) || (step<0 && start<=stop)){
+        return [];
+    };
+    var result = [];
+    for (var i=start; step>0 ? i<stop : i>stop; i+=step){
+        result.push(i);
+    };
+    return result;
+};

@@ -35,7 +35,7 @@
         </div>
 
         <div id ="controls" class="btn-group-vertical row" role="group">
-            <button type="button" class="btn btn-default" onclick = "getRuntime(detect)"> Detect rectangle </button>
+            <button type="button" class="btn btn-default" onclick = "getRuntime(detectBorderRectangle)"> Detect rectangle </button>
             <button type="button" class="btn btn-default" onclick = "getRuntime(crop)"> Crop </button>
             <button type="button" class="btn btn-default" onclick = "getRuntime(rotate)"> Rotate </button>
             <button type="button" class="btn btn-default" onclick = "getRuntime(removeMarkers)"> Remove markers </button>
@@ -152,7 +152,7 @@
 
 
     //Register color tracking.js uses to identify markers
-    tracking.ColorTracker.registerColor('marker', function(r, g, b) {
+    tracking.ColorTracker.registerColor('red', function(r, g, b) {
         return isRed({r:r,g:g,b:b});
             
     });
@@ -170,7 +170,7 @@
         function detect(){
             
             console.log("Start Detecting");
-            var tracker = new tracking.ColorTracker(['marker']);
+            var tracker = new tracking.ColorTracker('red');
             tracker.on('track', function(event) {
                 event.data.forEach(function(rect) {
                     console.log("tracking found rect: ");
@@ -198,8 +198,25 @@
                 -image: 
                 -colorTracker:
         */
-        function detectBorderRectangle(image,colorTracker){
-
+        function detectBorderRectangle(){
+            console.log("Start Detecting");
+            var tracker = new tracking.ColorTracker(['red']);
+            tracker.on('track', function(event) {
+                event.data.forEach(function(rect) {
+                    console.log("tracking found rect: ");
+                    console.log(rect);
+                    tracked_rect = rect;
+                    var x = rect.x;
+                    var y = rect.y;
+                    var w = rect.width;
+                    var h = rect.height;
+                    //corners might change
+                    var corners = [new Point(x,y),new Point(x+w, y+h), new Point(x+w,y), new Point(x, y+h)];
+                    markerRectangle=new Rectangle(corners);
+                });
+            });
+            tracking.track('#canvas', tracker); //start tracking           
+            drawRectangle(markerRectangle.getCorners(),"blue");
         }
         /*
          Moves along the detected rectangle, if the majority of the points are red, assumes
