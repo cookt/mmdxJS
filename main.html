@@ -125,6 +125,8 @@
         //canvas.height = imageHeight;
         //canvas.width = imageWidth;
         //context.drawImage(imageObj,0, 0);
+        imageData = context.getImageData(0,0,imageWidth, imageHeight);
+        pixels = imageData.data;
     };
     //function loadImage(image_base64){
     //    imageObj.src = image_base64
@@ -141,6 +143,7 @@
     //Constant specifying how many regions along each strip is considered
     var nMarkerRegions=2;
 
+    
 //*****************************************************************************************************
 //*****************************************************************************************************
 //*********************************** YOU CAN COPY CODE AS FROM HERE INTO THE INNER ONE****************
@@ -163,14 +166,15 @@
          If rotated, find the intersection of the actual rectange with the abovemention rectangle
          and assigns corners correctly
          */
+        
         function detect(){
-            imageData = context.getImageData(0,0,imageWidth, imageHeight);
-            pixels = imageData.data;
+            
             console.log("Start Detecting");
             var tracker = new tracking.ColorTracker(['marker']);
             tracker.on('track', function(event) {
                 event.data.forEach(function(rect) {
-                    console.log("tracking found smth");
+                    console.log("tracking found rect: ");
+                    console.log(rect);
                     tracked_rect = rect;
                     var x = rect.x;
                     var y = rect.y;
@@ -189,7 +193,14 @@
             });
             tracking.track('#canvas', tracker); //start tracking
         }
+        /*
+            Params:
+                -image: 
+                -colorTracker:
+        */
+        function detectBorderRectangle(image,colorTracker){
 
+        }
         /*
          Moves along the detected rectangle, if the majority of the points are red, assumes
          tracker found a correct rectangle
